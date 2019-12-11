@@ -1,0 +1,34 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "validate json object",
+    "title": "test",
+    "type": "object",
+    "additionalProperties": true,
+    "required" : ["בית משפט", "מספר תיק", "שופטים", "העותרים", "המשיבים", "בשם העותרים", "בשם המשיבים", "החלטה"],
+    "patternProperties": {
+      "בית משפט": {
+        "type": "string"
+      },
+      "מספר תיק": {
+        "type": "string"
+      },
+      "שופטים": {
+        "type": "string"
+      },
+      "העותרים": {
+        "type": "string"
+      },
+      "המשיבים": {
+        "type": "string"
+      },
+      "בשם העותרים": {
+        "type": "string"
+      },
+      "בשם המשיבים": {
+        "type": "string"
+      },
+      "החלטה": {
+        "type": "string"
+      }
+    }
+}
