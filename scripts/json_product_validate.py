@@ -3,6 +3,7 @@ import json
 
 DEFAULT_SCHEMA = 'C:/Users/Administrator/Documents/AccessibleCourtData/json_schema/json_schema'
 
+
 def validate_v1(dataFile, schemaFile=DEFAULT_SCHEMA):
     with open(dataFile, encoding='utf-8') as dataToElastic:
         elasticData = json.load(dataToElastic)
