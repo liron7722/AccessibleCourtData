@@ -1,0 +1,7 @@
+- Creates a function that reads the last date the Scrape was performed
+- Creates a function that writes the last date that Scrape performed
+- Create a function or Bat file that will run once every 24 hours
+- Add notes what each function does + what it receives and what it returns
+- Creating a function that divides the Scrape into several browsers (two-year distribution)
+- bug fix:
+Bug: Can't Scrape Files Starting at Number 101 Because He Can't See Them - Scroll Down
