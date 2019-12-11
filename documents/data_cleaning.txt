@@ -1,0 +1,4 @@
+- Get the unprocessed information from Scrapy.py
+- Clear the information
+- Process the information sitting in the template
+- Save the information in a csv file

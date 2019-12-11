@@ -1,0 +1,11 @@
+Curl -X GET “http://localhost:9200/_index/_doc/_id?pretty”
+
+Curl -X PUT “http://localhost:9200/_index/_doc/_id?pretty” -d ‘Directory’ -H “Content-Type: application/json”
+
+Curl -X POST “http://localhost:9200/_index/_update/_id?pretty” -d ‘Directory’ -H “Content-Type: application/json”
+
+Curl -X DELETE “http://localhost:9200/_index”
+
+Curl -X GET “http://localhost:9200/_script/*.script”
+
+Curl -X DELETE “http://localhost:9200/_script/*.script”
