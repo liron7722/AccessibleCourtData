@@ -3,5 +3,9 @@
 - Create a function or Bat file that will run once every 24 hours
 - Add notes what each function does + what it receives and what it returns
 - Creating a function that divides the Scrape into several browsers (two-year distribution)
+- Save list of cases that didnt scrape
+- Finally close browser
 - bug fix:
-Bug: Can't Scrape Files Starting at Number 101 Because He Can't See Them - Scroll Down
+Bug: Url cheaking error
+Bug: Sometimes After going into a case, it goes in mid page and cant see info table
+Bug: Cant get number of case in the page
