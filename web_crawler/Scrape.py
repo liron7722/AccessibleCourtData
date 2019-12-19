@@ -1,6 +1,8 @@
 import os
+import re
 import json
 from datetime import date
+from threading import Thread
 from time import time, sleep
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -24,7 +26,7 @@ def getTodayDate():
 def getStartDate():
     day = 2
     month = 12
-    year = 2015
+    year = 2019
     return day, month, year
 
 
@@ -210,7 +212,8 @@ def dropDateFromScrapeList(date):
 # input - date as string, index as int
 # output - return case file name by date and page index as string
 def fileNameforJsonCase(date, index):
-    return date + '_' + str(index)
+    fixedDate = re.sub(r'/', '_', date)
+    return fixedDate + '_' + str(index) + '.json'
 
 
 # input - fileName as string, item as list\dict\tuple
@@ -265,9 +268,9 @@ def getAmountofCases(driver):
     elem = findElemByXpath(driver, Xpath)
     if elem is not None:
         text = elem.text
-        return [int(s) for s in text.split() if s.isdigit()][0]
-    else:
-        return 500
+        if len(text) > 0:
+            return [int(s) for s in text.split() if s.isdigit()][0]
+    return 500
 
 
 # output return serviceFram frame id as string
@@ -276,7 +279,7 @@ def getserviceFramID():
 
 
 # input - driver as web driver
-# do - if frame found by id webdriver will switch frame, otherwise print error massage
+# do - if frame found by id webdriver will switch frame, otherwise return false
 def getFramebyID(driver):
     ID = getserviceFramID()
     frame = findElemByID(driver, ID)
@@ -316,7 +319,6 @@ def getSourceText(driver):
 # input - driver as web driver
 def badMassageforPageSource(driver, index):
     print('Couldnt get link at index: ', index)
-    currentUrlErrorReport(driver)
 
 
 # input - driver as web driver
@@ -332,17 +334,17 @@ def getCaseNameXpath(index):
 
 
 # input - driver as web driver, index as int
-# output - return case name as element and true, otherwise print error masage and return none and false
+# output - return case name as element, otherwise print error massage and return none
+# do - return case name and click that case
 def getCase(driver, index):
     Xpath = getCaseNameXpath(index)
     case = findElemByXpath(driver, Xpath)
-    if case != None:
+    if case is not None:
         caseName = case.text
         case.click()
         return caseName
     else:
         print('getCase Broke at index: ', index)
-        currentUrlErrorReport(driver)
         return None
 
 
@@ -363,18 +365,32 @@ def get_Ng_src_Xpath():
 def getFramebyXpath(driver):
     Xpath = get_Ng_src_Xpath()
     frame = findElemByXpath(driver, Xpath)
-    if frame != None:
+    if frame is not None:
         driver.switch_to.frame(frame)
     else:
         print('Could not find ng-src Frame in this page:')
-        currentUrlErrorReport(driver)(driver)
+
+
+def getBackButtonXpath():
+    return '/html/body/div[2]/div/div/section/div/a[1]'
+
+
+def getThisPageUp(driver):
+    Xpath = getBackButtonXpath()
+    elem = findElemByXpath(driver, Xpath)
+    if elem is not None:
+        elem.location_once_scrolled_into_view
+    else:
+        print('Could not scroll to back button')
 
 
 # input - driver as web driver
 # do - call switchWindow, getFramebyID and getFramebyXpath functions
 def setUpBeforGetCaseInsideDetails(driver):
+    # add here window go up
     switchWindow(driver)
     getFramebyID(driver)
+    getThisPageUp(driver)
     getFramebyXpath(driver)
 
 
@@ -389,7 +405,8 @@ def getColumnXpath(index):
 def getColumnText(driver, index):
     Xpath = '/html/body/div/div[2]/div[' + str(index) + ']'
     elem = findElemByXpath(driver, Xpath)
-    if elem != None:
+    sleep(1)
+    if elem is not None:
         return elem.text
     else:
         return None
@@ -404,7 +421,7 @@ def blockedCaseXpath():
 # output - return False if this is a private case, otherwise True
 def isBlockedCase(driver):
     elem = findElemByXpath(driver, blockedCaseXpath())
-    if elem != None:
+    if elem is not None:
         print('This one in a private case !!!')
         return False
     else:
@@ -415,28 +432,19 @@ def isBlockedCase(driver):
 # output - return all of the case info as dict[column name] = text
 def getCaseInsideDetails(driver):
     mydict = dict()
-    tryAgian = True
 
-    if True:  # isBlockedCase(driver):
+    if isBlockedCase(driver):
         # make more loops for more columns
         for index in range(1, 8):
             elem = findElemByXpath(driver, getColumnXpath(index))
-            if elem != None:
-                # elem.location_once_scrolled_into_view
+            if elem is not None:
                 headline = elem.text
                 elem.click()
                 text = getColumnText(driver, index)
                 mydict[headline] = text
             else:
-                if tryAgian and index == 1:
-                    tryAgian = False
-                    # driver.refresh()
-                    # setUpBeforGetCaseInsideDetails(driver)
-                else:
-                    print('Could not press Case column index: ', index)
-                    currentUrlErrorReport(driver)
-                    continue
-
+                print('Could not press Case column index: ', index)
+                continue
     return mydict
 
 
@@ -450,7 +458,7 @@ def getPageSource(driver, index):
 
     Xpath = getHtmlXpath(index)
     elem = findElemByXpath(driver, Xpath)
-    if elem != None:
+    if elem is not None:
         driver.get(elem.get_attribute('href'))
         pageSource = getSourceText(driver)
     else:
@@ -472,7 +480,7 @@ def getCaseDetails(driver, index):
         scrollIntoView(driver, index)
 
     caseName = getCase(driver, index)
-    if caseName != None:
+    if caseName is not None:
         setUpBeforGetCaseInsideDetails(driver)
         caseDetailsDict['Case Details'] = getCaseInsideDetails(driver)
         driver.back()
@@ -485,79 +493,77 @@ def getCaseDetails(driver, index):
 # input - driver as web driver
 def failedAtCase(driver, index, current_url):
     print('CaseData Broke at index: ', index)
-    currentUrlErrorReport(driver)
-    driver.get(current_url)  # lets start over
-    # switchWindow(driver)
+    # driver.get(current_url)  # lets start over
 
 
 # input - driver as web driver
-# output - return all the cases for the page he see as dict[caseName] = [caseFileDict, caseDetailsDict]
+# output (disabled) - return all the cases for the page he see as dict[caseName] = [caseFileDict, caseDetailsDict]
 #                                                    caseFileDict as dict['Case File'] = document text
 #                                                    caseDetailsDict as dict['Case Details'] = Case Details
 def getCasesData(driver, date):
-    dictofCases = dict()
     N = getAmountofCases(driver) + 1
     current_url = driver.current_url
-
+    errorCount = 0
+    noErrors = True
     for index in range(1, N):
         t1 = time()
-        noErrors = True
-        tryAgian = True
-        SecondTry = True
-
-        while tryAgian:
+        while True:
             try:
-                # currentCase = getCaseNameXpath(index)
-                print('Start page source')
                 caseFileDict = getPageSource(driver, index)
                 cheakUrl(driver, current_url)
-                print('Start case Details')
                 caseDetailsDict, caseName = getCaseDetails(driver, index)
+                currentCase = [str(caseFileDict), caseDetailsDict]
+                writeToJson(fileNameforJsonCase(date, index), currentCase)
 
-                dictofCases[caseName] = [caseFileDict, caseDetailsDict]
-                print(dictofCases[caseName])
                 print('Case:', index, ' took in seconds: ', time() - t1)
-
-                tryAgian = False
-                print('cheak1')
-                writeToJson(fileNameforJsonCase(date, index), dictofCases[caseName])
-                print('cheak2')
+                errorCount = 0
+                break
             except:
+                failedAtCase(driver, index, current_url)
+                if errorCount < 1:
+                    errorCount += 1
+                    continue
                 noErrors = False
-                if SecondTry:
-                    failedAtCase(driver, index, current_url)
-                    SecondTry = False
-                else:
-                    print('failed at Second Try')
-                    tryAgian = False
-                    # intoJasonFile(index, date, dictofCases)
-                    break
+                errorCount = 0
+                break
     if noErrors:
         dropDateFromScrapeList(date)
+    # else:
+    # TODO add here make the list of dates and index that didnt scrape
     return dictofCases
 
 
-# output - return: all the cases for each date as dict[date] = cases,
-#                 cases as dict[caseName] = [caseFileDict, caseDetailsDict]
-#                 caseFileDict as dict['Case File'] = document text
-#                 caseDetailsDict as dict['Case Details'] = Case Details
+def crawl(urlSet):
+    driver = webdriver.Chrome()
+    driver.maximize_window()
+
+    for date in urlSet.keys():
+        t1 = time()
+        driver.get(urlSet[date])
+        getCasesData(driver, date)
+        print('Date: ', date, ' took in minutes: ', (time() - t1) / 60)
+    # close web driver
+    driver.quit()
+
+
 # do - go to each day that not scraped and take all the case files from them
 def start():
+    # get set of links
     linksToScrape = getListofLinks()
-    numofThreads = len(linksToScrape)
-
-    dictOfData = dict()
-    driver = webdriver.Chrome()
-    # driver.maximize_window()
-
-    for index in range(len(linksToScrape)):
-        # here we call the function that create new webdriver to scrape this list of dates
-        for date in linksToScrape[index].keys():
-            t1 = time()
-            driver.get(linksToScrape[index][date])
-            getCasesData(driver, date)
-            print('Date: ', date, ' took in minutes: ', (time() - t1) / 60)
-    return dictOfData
+    # create a list of threads
+    threads = []
+    # In this case 'urls' is a list of urls to be crawled.
+    for set in range(len(linksToScrape)):
+        # We start one thread per url present.
+        process = Thread(target=crawl, args=[linksToScrape[set]])
+        process.start()
+        threads.append(process)
+    # We now pause execution on the main thread by 'joining' all of our started threads.
+    # This ensures that each has finished processing the urls.
+    for process in threads:
+        process.join()
+    # At this point, results for each URL are now neatly stored in order in 'results'
 
 
 start()
+

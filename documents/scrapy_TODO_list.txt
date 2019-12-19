@@ -1,9 +1,6 @@
 - Create a function or Bat file that will run once every 24 hours
-- run few webdrives at the same time
 - add function that cheak that if the start date of scrape change it should add it to do the list
 - Add notes what each function does + what it receives and what it returns
-- Finally close browser
 - bug fix:
-Bug: Url cheaking error
-Bug: Sometimes After going into a case, it goes in mid page and cant see info table
+
 
