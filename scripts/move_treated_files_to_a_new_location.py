@@ -1,5 +1,5 @@
 import shutil
-from relative_path import *
+from scripts.relative_path import *
 
 DESTINATION_FOLDER = "products\handled_csv_products"
 
