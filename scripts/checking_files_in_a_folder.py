@@ -1,7 +1,9 @@
-from move_treated_files_to_a_new_location import *
-from index_data import *
+from scripts.move_treated_files_to_a_new_location import *
+from scripts.index_data import *
 
 UNHANDLED_CSV_PRODUCTS_PATH = "products\/unhandled_csv_products"
+RULING_INDEX = 'rulings'
+RULING_ENTITIES = 'supreme_court_rulings'
 
 
 def Checking_files_in_a_folder():
@@ -12,7 +14,7 @@ def Checking_files_in_a_folder():
             if file.endswith(".csv"):
                 ack = False
                 while ack != True:
-                    ack = check_index(files_to_read=file, index_of_product=RULING_INDEX)
+                    ack = check_index(files_to_read=file, index_of_product=RULING_INDEX, id_of_product=RULING_ENTITIES)
                 move_to_a_new_location(os.path.join(directory, file))
 
 
