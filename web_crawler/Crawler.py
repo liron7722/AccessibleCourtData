@@ -11,15 +11,17 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 class Crawler:
     _driver = None  # Web Driver
-    _delay = None  # Timer for finding web element
-    _url = None  # starting page
-    _log = list()  # Inside log
-    _text_query = None
-    _index = None  # number of crawler running
-    _log_name = None  # log name
-    _log_path = None  # log path
+    _delay = None  # Timer for finding web element as int
+    _url = None  # starting page as string
+    _log = list()  # Inside log as list
+    _text_query = None # latest text scrape as string
+    _index = None  # number of crawler running as int
+    _log_name = None  # log name as string
+    _log_path = None  # log path as string
+    _log_level = None # log level as int
 
-    def __init__(self, index=1, browser=webdriver.Chrome, delay=1, url=None):
+    def __init__(self, index=1, browser=webdriver.Chrome, delay=1, url=None, log_level=4):
+        self._log_level = log_level
         self._log_name = 'crawler ' + str(index) + ' log ' + my_local_time() + '.json'  # name log file
         self.update_path()  # log path
         self.update_log('Initialize', user='Crawler')
@@ -40,16 +42,17 @@ class Crawler:
         self._log_path = change_path(get_path(), 'logs')
 
     # input - massage as string
-    def update_log(self, massage, user='Scraper'):
+    def update_log(self, massage, user='Scraper', level=3):
         text = my_local_time() + ' ' + user + ': ' + massage  # time + massage
         # print(text)
-        self._log.append(text)
-        writeJson(self._log_path, self._log_name, self._log, '\\')
+        if level < self._log_level:
+            self._log.append(text)
+            writeJson(self._log_path, self._log_name, self._log, '\\')
 
     def update_delay(self, delay=1):
         if type(delay) is int:
             self._delay = delay
-            massage = 'Delay change to: ' + str(delay)
+            massage = 'Delay change to: {}'.format(delay)
         else:
             massage = 'Delay input was not int'
 
@@ -74,7 +77,7 @@ class Crawler:
             massage = 'Did not get new URL to load'
             result = True
 
-        self.update_log(massage, user='Crawler')
+        self.update_log(massage, user='Crawler', level=2)
         return result
 
     # output - return True if successful
@@ -100,7 +103,7 @@ class Crawler:
     def switch_frame(self, frame):
         self._driver.switch_to.frame(frame)
         massage = 'switch to frame'
-        self.update_log(massage, user='Crawler')
+        self.update_log(massage, user='Crawler', level=4)
         return True
 
     # do - switch windows handle after case was clicked
@@ -117,26 +120,27 @@ class Crawler:
     def get_page_source(self):
         page_source = self._driver.page_source
         massage = 'Got page Source'
-        self.update_log(massage, user='Crawler')
+        self.update_log(massage, user='Crawler', level=3)
         return page_source
 
     # input - massage as string, exception as string
-    def got_error(self, massage, exception=None):
-        self.update_log(massage, user='Crawler')
-        if exception is not None:
-            self.update_log('Error: ' + exception.msg, user='Crawler')
-            # self.update_log('stacktrace: ' + exception.stacktrace)
-        else:
-            self.update_log('Error: No exception massage and no Trace', user='Crawler')
+    def got_error(self, massage, exception=None, doPrint=True):
+        if doPrint:
+            self.update_log(massage, user='Crawler')
+            if exception is not None:
+                self.update_log('Error: ' + exception.msg, user='Crawler', level=0)
+                # self.update_log('stacktrace: ' + exception.stacktrace)
+            else:
+                self.update_log('Error: No exception massage and no Trace', user='Crawler')
 
     # input - elem_type as string, string as string
     # output - return element if found in <delay> seconds, None otherwise
-    def find_elem(self, elem_type, string, driver=None, delay=2, raise_error=True):
+    def find_elem(self, elem_type, string, driver=None, delay=2, raise_error=True, doPrint=True):
         if driver is None:
             driver = self._driver
         try:
             elem = None
-            massage = 'found elem: ' + string + ', type: ' + elem_type
+            massage = 'found elem: {}, type: {}'.format(string, elem_type)
             if elem_type == 'xpath':
                 WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.XPATH, string)))
                 elem = driver.find_element_by_xpath(string)
@@ -144,27 +148,26 @@ class Crawler:
                 WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.ID, string)))
                 elem = driver.find_element_by_id(string)
             else:
-                massage = 'find_elem function do not have: ' + elem_type
-            self.update_log(massage, user='Crawler')
+                massage = 'find_elem function do not have: {}'.format(elem_type)
+            self.update_log(massage, user='Crawler', level=4)
             return elem
 
         except TimeoutException as exception:  # did not found elem in time
-            # TODO FIX bug here
             if raise_error:
                 massage = 'Did not find elem: {}, type: {}, delay: {}'.format(string, elem_type, delay)
-                self.got_error(massage, exception)
+                self.got_error(massage, exception, doPrint)
             return None
 
         except ElementNotVisibleException as exception:  # did not found elem
             if raise_error:
-                massage = 'Elem is not visible: ' + string + ', type: ' + elem_type
-                self.got_error(massage, exception)
+                massage = 'Elem is not visible: {}, type: {}'.format(string, elem_type)
+                self.got_error(massage, exception, doPrint)
             return None
 
         except NoSuchElementException as exception:  # did not found elem
             if raise_error:
-                massage = 'Did not find elem: ' + string + ', type: ' + elem_type
-                self.got_error(massage, exception)
+                massage = 'Did not find elem: {}, type: {}'.format(string, elem_type)
+                self.got_error(massage, exception, doPrint)
             return None
 
     # input - driver as web driver, elem as web element
@@ -175,7 +178,7 @@ class Crawler:
             hover = ActionChains(driver).move_to_element(elem)
             hover.perform()
             massage = 'elem got hovered'
-            self.update_log(massage, user='Crawler')
+            self.update_log(massage, user='Crawler', level=3)
             return True
 
         except:
@@ -189,12 +192,12 @@ class Crawler:
     def select_elem(self, elem, option):
         massage = None
         if type(option) is not str:  # if value is not string
-            massage = 'option should be string and not ' + type(option)
+            massage = 'option should be string and not {}'.format(type(option))
         try:
             select = Select(elem)  # select the elem
             select.select_by_visible_text(option)  # select by text
             massage = 'elem got selected'
-            self.update_log(massage, user='Crawler')
+            self.update_log(massage, user='Crawler', level=4)
             return True
 
         except ElementNotSelectableException as exception:
@@ -209,7 +212,7 @@ class Crawler:
         try:
             elem.click()  # click the elem
             massage = 'element got clicked'
-            self.update_log(massage, user='Crawler')
+            self.update_log(massage, user='Crawler', level=3)
             return True
 
         except ElementClickInterceptedException as exception:
@@ -233,7 +236,7 @@ class Crawler:
                 massage = 'text box got cleared'
             elem.send_keys(data)  # type sting into text box
             massage += ', element got the data'
-            self.update_log(massage, user='Crawler')
+            self.update_log(massage, user='Crawler', level=4)
             return True
 
         except:
@@ -248,8 +251,8 @@ class Crawler:
         try:
             text = elem.text  # get elem text
             self._text_query = text
-            massage = 'Got text from elem: ' + text
-            self.update_log(massage, user='Crawler')
+            massage = 'Got text from elem: {}'.format(text)
+            self.update_log(massage, user='Crawler', level=4)
             return True
 
         except:
@@ -275,7 +278,7 @@ class Crawler:
         try:
             driver.execute_script(string, elem)
             massage = 'Script executed'
-            self.update_log(massage, user='Crawler')
+            self.update_log(massage, user='Crawler', level=3)
             return True
 
         except JavascriptException as exception:
@@ -289,7 +292,7 @@ class Crawler:
     def alert_handle(self, driver, result=None):
         try:
             obj = driver.switch_to.alert  # driver focus on alert window
-            text = 'alert massage says: ' + obj.text  # take alert window massage
+            text = 'alert massage says: {}'.format(obj.text)  # take alert window massage
 
             if result is not None:
                 if result == 'accept':
@@ -300,8 +303,8 @@ class Crawler:
             driver.switch_to.default_content()  # return to main window
 
             self._text_query = text
-            massage = 'Alert say: ' + text
-            self.update_log(massage, user='Crawler')
+            massage = 'Alert say: {}'.format(text)
+            self.update_log(massage, user='Crawler', level=2)
             return True
 
         except NoAlertPresentException as exception:

@@ -13,7 +13,7 @@ DateListFileName = 'ListOfDatesToScrape.json'
 
 # output - return  day, month, year as int
 def getStartDate():
-    day, month, year = 2, 12, 2019
+    day, month, year = 1, 1, 1997
     return day, month, year
 
 
