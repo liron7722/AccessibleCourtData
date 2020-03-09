@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from extra import *
 from Crawler import Crawler
 from threading import Thread
