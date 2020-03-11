@@ -50776,5 +50776,11 @@
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=09/03/2020&CEndDate=09/03/2020&freeText=null&Importance=null",
         "first": 0,
         "last": -1
+    },
+    {
+        "date": "10/03/2020",
+        "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=10/03/2020&CEndDate=10/03/2020&freeText=null&Importance=null",
+        "first": 0,
+        "last": -1
     }
 ]

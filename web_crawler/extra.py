@@ -67,8 +67,19 @@ def clean_spaces(text):
     temp_list = list()
     for index in range(len(text)):
         if text[index] == ' ':
-            if index != 0 and index != len(text) and (text[index - 1] == ' ' or text[index + 1] == ' '):
+            if index != 0:
+                if text[index - 1] == ' ':
+                    continue
+            else:
                 continue
         temp_list.append(text[index])
-
+    while temp_list[-1] == ' ':  # clean last spaces in the end
+        temp_list.pop(-1)
     return "".join(temp_list)
+
+
+def makeSureNoNumber(line, minimum=1, maximum=20):
+    for number in range(minimum, maximum):
+        if str(number) in line:
+            line = line.replace(str(number), '')
+    return clean_spaces(line)

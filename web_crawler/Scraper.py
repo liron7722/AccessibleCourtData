@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from extra import *
+from docToDict import doc_into_dict
 from Crawler import Crawler
 from threading import Thread
 from time import time, sleep
@@ -18,7 +19,6 @@ class Scraper:
 
     # Functions
     def get_link(self):
-        link = {'date': None, 'url': None, 'first': 0, 'last': 0}
         if len(self.links_To_Scrape) > 0:
             link = self.links_To_Scrape[0]
             self.links_To_Scrape.remove(link)
@@ -252,15 +252,12 @@ class Scraper:
 
     @staticmethod
     def get_doc(crawler):
-        text = None
+        text_dict = None
         elem = crawler.find_elem('xpath', '/html/body/div[2]/div/div/div[2]/div/div[2]')
         if elem is not None:
-            text = clean_spaces(elem.text)
-        return text
-
-    def doc_into_dict(self, text):
-        # TODO DOC into dict
-        pass
+            text = clean_spaces(elem.text)  # clean spaces
+            text_dict = doc_into_dict(text)
+        return text_dict
 
     # input - driver as web driver
     def getCaseDetails(self, crawler, index):
@@ -273,8 +270,7 @@ class Scraper:
         caseName = self.getCase(crawler, index)
 
         if caseName is not None:
-            case_doc = self.get_doc(crawler)
-            caseDetailsDict['Doc Details'] = case_doc  # self.doc_into_dict(case_doc)
+            caseDetailsDict['Doc Details'] = self.get_doc(crawler)
 
             self.get_Frame(crawler, 'xpath', '/html/body/div[2]/div/div/div[2]/div/div[1]/div/div/iframe')
             caseDetailsDict['Case Details'] = self.getCaseInsideDetails(crawler)
