@@ -73,7 +73,7 @@ def create_list_of_links(startDay, startMonth, startYear, endDay, endMonth, endY
 # output - return list of links as list(dict{date/link/first,last},dict{date/link/first,last},...)
 def getListOfLinks():
     if os.path.isfile(filePath + DateListFileName):  # check file exist
-        mylist = readJson(filePath, DateListFileName, '\\')
+        mylist = readJson(filePath, DateListFileName)
         startDay, startMonth, startYear = mylist[-1]['date']
         endDay, endMonth, endYear = getTodayDate()
         new_dates = create_list_of_links(startDay, startMonth, startYear, endDay, endMonth, endYear)
@@ -84,18 +84,18 @@ def getListOfLinks():
         endDay, endMonth, endYear = getTodayDate()
         mylist = create_list_of_links(startDay, startMonth, startYear, endDay, endMonth, endYear)
 
-    writeJson(filePath, DateListFileName, mylist, '\\')
+    writeJson(filePath, DateListFileName, mylist)
     return mylist
 
 
 # input - date as string
 # do - if date in list remove it from the file
 def UpdateScrapeList(date, first, last):
-    mylist = readJson(filePath, DateListFileName, '\\')
+    mylist = readJson(filePath, DateListFileName)
     for item in mylist:
         if date == item['date']:
             item['first'] = first
             item['last'] = last
             break
-    writeJson(filePath, DateListFileName, mylist, '\\')
+    writeJson(filePath, DateListFileName, mylist)
     return True
