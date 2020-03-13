@@ -2,24 +2,24 @@ import os
 import json
 
 
-def readJson(path, filename, side):
+def get_path():
+    return os.path.abspath(os.getcwd())
+
+
+def readJson(path, filename, side=os.sep):
     with open(path + side + filename) as json_file:
         data = json.load(json_file)
     return data
 
 
-def writeJson(path, filename, data, side):
+def writeJson(path, filename, data, side=os.sep):
     with open(path + side + filename, 'w') as outfile:
         json.dump(data, outfile, indent=4, ensure_ascii=False)
 
 
-def get_path():
-    return os.path.abspath(os.getcwd())
-
-
 def change_path(old, new):
     count = 1
-    while old[-count] is not '\\':
+    while old[-count] is not os.sep:
         count += 1
     return old[:len(old) - count + 1] + new
 
