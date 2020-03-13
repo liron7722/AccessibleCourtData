@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from extra import *
-from docToDict import doc_into_dict
 from Crawler import Crawler
 from threading import Thread
 from time import time, sleep
@@ -12,10 +11,10 @@ class Scraper:
     links_To_Scrape = None  # list of dict of urls as [[date] = [url], [date] = [url], ...]
     product_path = None
 
-    def __init__(self, num_of_crawlers=8):
+    def __init__(self, num_of_crawlers=1):
         self.num_of_crawlers = num_of_crawlers
         self.links_To_Scrape = getListOfLinks()
-        self.product_path = change_path(get_path(), 'products\\json_products')
+        self.product_path = change_path(get_path(), 'products' + os.sep + 'json_products')
 
     # Functions
     def get_link(self):
@@ -252,12 +251,11 @@ class Scraper:
 
     @staticmethod
     def get_doc(crawler):
-        text_dict = None
+        text = None
         elem = crawler.find_elem('xpath', '/html/body/div[2]/div/div/div[2]/div/div[2]')
         if elem is not None:
             text = clean_spaces(elem.text)  # clean spaces
-            text_dict = doc_into_dict(text)
-        return text_dict
+        return text
 
     # input - driver as web driver
     def getCaseDetails(self, crawler, index):
@@ -302,7 +300,7 @@ class Scraper:
             while True:
                 try:
                     case_details_dict = self.getCaseDetails(crawler, index)
-                    writeJson(self.product_path, self.file_Name_for_Json_Case(), case_details_dict, '\\')
+                    writeJson(self.product_path, self.file_Name_for_Json_Case(), case_details_dict)
 
                     massage = 'Case: {} took in seconds: {}'.format(index, time() - t1)
                     crawler.update_log(massage, level=1)
@@ -315,6 +313,7 @@ class Scraper:
                         no_errors = False
                         massage = 'first error at scraping case number: {} at: {} - trying again'.format(index, date)
                         crawler.update_log(massage, level=1)
+                        crawler.refresh()
                         continue
 
                     no_errors = True
