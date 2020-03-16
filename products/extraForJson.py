@@ -25,3 +25,10 @@ def writeJson(path, filename, data, side=os.sep):
 
 def getFilesFromFolder(folderName=get_path(), fileType='json'):
     return [f for f in glob.glob(folderName + os.sep + "*." + fileType)]
+
+
+def change_path(old, new):
+    count = 1
+    while old[-count] is not os.sep:
+        count += 1
+    return new + old[len(old) - count:]

@@ -1,9 +1,14 @@
 import os
 import json
+from time import sleep
 
 
 def get_path():
     return os.path.abspath(os.getcwd())
+
+
+def callSleep(days=1, hours=1, minutes=1, seconds=60):
+    sleep(days * hours * minutes * seconds)
 
 
 def readJson(path, filename, side=os.sep):
@@ -15,6 +20,10 @@ def readJson(path, filename, side=os.sep):
 def writeJson(path, filename, data, side=os.sep):
     with open(path + side + filename, 'w') as outfile:
         json.dump(data, outfile, indent=4, ensure_ascii=False)
+
+
+def separateDate(date):
+    return date.split('/')
 
 
 def change_path(old, new):

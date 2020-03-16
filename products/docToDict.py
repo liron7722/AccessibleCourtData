@@ -162,18 +162,19 @@ def run():
     unhandledFolder = get_path() + os.sep + 'unhandled_json_products'
     while True:
         listOfFiles = getFilesFromFolder(folderName=readFolder)
-        for fileName in listOfFiles:
-            doc = readJson(readFolder, fileName)
-            text = drop_extra_info(doc['Doc Details'])
-            txtDict, succeed = doc_into_dict(text)
-            doc['Doc Details'] = txtDict
-            writeFolder = handledFolder if succeed else unhandledFolder
-            writeJson(writeFolder, fileName, doc)
-
-        callSleep(minutes=10)  # after finished with all the files wait a bit - hours * minutes * seconds
+        if len(listOfFiles) > 0:
+            for fileName in listOfFiles:
+                doc = readJson('', fileName, side='')
+                text = drop_extra_info(doc['Doc Details'])
+                txtDict, succeed = doc_into_dict(text)
+                doc['Doc Details'] = txtDict
+                writeFolder = handledFolder if succeed else unhandledFolder
+                #os.remove(fileName)
+                fileName = change_path(fileName, writeFolder)
+                writeJson('', fileName, doc, side='')
+        else:
+            callSleep(minutes=10)  # after finished with all the files wait a bit - hours * minutes * seconds
 
 
 if __name__ == '__main__':
-    #run()
-
-    print(('d' or 'g') in '')
+    run()

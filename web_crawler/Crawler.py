@@ -1,4 +1,5 @@
 from extra import *
+from Logger import Logger
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException, \
     ElementNotVisibleException, ElementNotSelectableException, ElementNotInteractableException, NoAlertPresentException, \
@@ -18,12 +19,11 @@ class Crawler:
     _index = None  # number of crawler running as int
     _log_name = None  # log name as string
     _log_path = None  # log path as string
-    _log_level = None  # log level as int
 
     def __init__(self, index=1, browser=webdriver.Chrome, delay=1, url=None, log_level=4):
-        self._log_level = log_level
         self._log_name = 'crawler ' + str(index) + ' log ' + my_local_time() + '.json'  # name log file
-        self.update_path()  # log path
+        self._log_path = change_path(get_path(), 'logs')
+        self.logger = Logger(self._log_name, self._log_path, writeLvl=log_level)
         self.update_log('Initialize')
         self._driver = browser()  # open Browser
         self._driver.fullscreen_window()  # Maximize browser window
@@ -38,16 +38,9 @@ class Crawler:
         else:
             return None
 
-    def update_path(self):
-        self._log_path = change_path(get_path(), 'logs')
-
     # input - massage as string
     def update_log(self, massage, user='Crawler', level=3):
-        text = my_local_time() + ' ' + user + ': ' + massage  # time + massage
-        # print(text)
-        if level < self._log_level:
-            self._log.append(text)
-            writeJson(self._log_path, self._log_name, self._log)
+        self.logger.updateLog(massage, user, level)
 
     def update_delay(self, delay=1, user='Crawler'):
         if type(delay) is int:
@@ -59,24 +52,22 @@ class Crawler:
         self.update_log(massage, user=user)
 
     def update_page(self, url=None, user='Crawler'):
+        result = False
         if url is not None:
             if type(url) is str:
                 self._driver.get(url)
-                #  TODO delay of 3 seconds or wait to page load fully
+                callSleep(seconds=5)
                 if True:  # TODO check if page loaded aka code 200
                     self._url = url
                     massage = 'URL change to: ' + str(url)
-                    result = False
+                    result = True
                 else:
                     self._driver.back()
-                    massage = 'Could not load: ' + str(url)
-                    result = True
+                    massage = 'Could not load: {}'.format(url)
             else:
                 massage = 'URL input was not string'
-                result = True
         else:
             massage = 'Did not get new URL to load'
-            result = True
 
         self.update_log(massage, user=user, level=2)
         return result
