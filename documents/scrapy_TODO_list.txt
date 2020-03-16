@@ -1,8 +1,10 @@
 - Scrape 2000 or more cases
 - improve scroll to 90+ case
+- befor trying to open the browser check if windows or linux
+
+
 
 - bug fix:
 	cheak for bugs
-	stuck on same page bug
 	what happen after 90 cases
-
+	in linker.py bug when reading last file
