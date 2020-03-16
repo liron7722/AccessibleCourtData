@@ -2,20 +2,20 @@
     {
         "date": "01/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=01/01/1997&CEndDate=01/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 3,
+        "last": 2
     },
     {
         "date": "02/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=02/01/1997&CEndDate=02/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 1,
+        "last": 0
     },
     {
         "date": "03/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=03/01/1997&CEndDate=03/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 1,
+        "last": 0
     },
     {
         "date": "04/01/1997",
@@ -26,8 +26,8 @@
     {
         "date": "05/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=05/01/1997&CEndDate=05/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 3,
+        "last": 2
     },
     {
         "date": "06/01/1997",
@@ -38,32 +38,32 @@
     {
         "date": "07/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=07/01/1997&CEndDate=07/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 4,
+        "last": 3
     },
     {
         "date": "08/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=08/01/1997&CEndDate=08/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 1,
+        "last": 0
     },
     {
         "date": "09/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=09/01/1997&CEndDate=09/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 5,
+        "last": 4
     },
     {
         "date": "10/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=10/01/1997&CEndDate=10/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 1,
+        "last": 0
     },
     {
         "date": "11/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=11/01/1997&CEndDate=11/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 1,
+        "last": 0
     },
     {
         "date": "12/01/1997",
@@ -74,14 +74,14 @@
     {
         "date": "13/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=13/01/1997&CEndDate=13/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 3,
+        "last": 2
     },
     {
         "date": "14/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=14/01/1997&CEndDate=14/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 1,
+        "last": 0
     },
     {
         "date": "15/01/1997",
@@ -98,8 +98,8 @@
     {
         "date": "17/01/1997",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=17/01/1997&CEndDate=17/01/1997&freeText=null&Importance=null",
-        "first": 0,
-        "last": -1
+        "first": 1,
+        "last": 0
     },
     {
         "date": "18/01/1997",
@@ -50780,6 +50780,42 @@
     {
         "date": "10/03/2020",
         "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=10/03/2020&CEndDate=10/03/2020&freeText=null&Importance=null",
+        "first": 0,
+        "last": -1
+    },
+    {
+        "date": "11/03/2020",
+        "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=11/03/2020&CEndDate=11/03/2020&freeText=null&Importance=null",
+        "first": 0,
+        "last": -1
+    },
+    {
+        "date": "12/03/2020",
+        "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=12/03/2020&CEndDate=12/03/2020&freeText=null&Importance=null",
+        "first": 0,
+        "last": -1
+    },
+    {
+        "date": "13/03/2020",
+        "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=13/03/2020&CEndDate=13/03/2020&freeText=null&Importance=null",
+        "first": 0,
+        "last": -1
+    },
+    {
+        "date": "14/03/2020",
+        "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=14/03/2020&CEndDate=14/03/2020&freeText=null&Importance=null",
+        "first": 0,
+        "last": -1
+    },
+    {
+        "date": "15/03/2020",
+        "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=15/03/2020&CEndDate=15/03/2020&freeText=null&Importance=null",
+        "first": 0,
+        "last": -1
+    },
+    {
+        "date": "16/03/2020",
+        "url": "https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate=16/03/2020&CEndDate=16/03/2020&freeText=null&Importance=null",
         "first": 0,
         "last": -1
     }
