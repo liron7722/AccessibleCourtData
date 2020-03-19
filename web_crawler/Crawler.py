@@ -1,4 +1,5 @@
 from extra import *
+import platform
 from Logger import Logger
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException, \
@@ -25,7 +26,9 @@ class Crawler:
         self._log_path = change_path(get_path(), 'logs')
         self.logger = Logger(self._log_name, self._log_path, writeLvl=log_level)
         self.update_log('Initialize')
-        self._driver = browser()  # open Browser
+        self._driver = browser() if platform.system() == 'Windows' \
+            else browser(executable_path=get_path() + os.sep + 'chromedriver') # open Browser windows
+        # self._driver = browser(executable_path=get_path() + os.sep + 'chromedriver')  # open Browser linux
         self._driver.fullscreen_window()  # Maximize browser window
         self.update_delay(delay)  # update delay
         self.update_page(url)  # open url
@@ -206,8 +209,11 @@ class Crawler:
     # output - return True if successful, otherwise False
     def click_elem(self, elem, user='Crawler'):
         try:
-            elem.click()  # click the elem
-            massage = 'element got clicked'
+            if elem is not None:
+                elem.click()  # click the elem
+                massage = 'element got clicked'
+            else:
+                massage = 'didnt got element to click - got None instead'
             self.update_log(massage, user=user, level=3)
             return True
 
