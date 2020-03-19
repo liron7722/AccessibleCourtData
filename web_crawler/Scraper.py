@@ -30,7 +30,7 @@ class Scraper:
     # output - return case file name by date and page index as string
     @staticmethod
     def file_Name_for_Json_Case():
-        return my_local_time() + '.json'
+        return my_local_time().replace(' ', '_') + '.json'
 
     @staticmethod
     def get_Frame(crawler, elem_type, string):
