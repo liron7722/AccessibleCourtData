@@ -1,4 +1,6 @@
-- Get the unprocessed information from Scrapy.py
-- Clear the information
-- Process the information sitting in the template
-- Save the information in a csv file
+- Improve docToDict.py - 
+	Functions:
+		gotExtraInformation - more values into dict
+		get_Key - more values into dict
+		doc_into_dict Functions - better manage
+
