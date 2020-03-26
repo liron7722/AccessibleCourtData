@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from extra import *
 from Crawler import Crawler
 from threading import Thread
@@ -10,17 +11,19 @@ class Scraper:
     links_To_Scrape = None  # list of dict of urls as [[date] = [url], [date] = [url], ...]
     product_path = None
 
-    def __init__(self, num_of_crawlers=1):
+    def __init__(self, num_of_crawlers=2):
         self.num_of_crawlers = num_of_crawlers
         self.links_To_Scrape = getListOfLinks()
-        self.product_path = change_path(get_path(), 'products\\json_products')
+        self.product_path = change_path(get_path(), 'products' + os.sep + 'json_products')
 
     # Functions
     def get_link(self):
-        link = {'date': None, 'url': None, 'first': 0, 'last': 0}
         if len(self.links_To_Scrape) > 0:
             link = self.links_To_Scrape[0]
             self.links_To_Scrape.remove(link)
+        else:
+            self.links_To_Scrape = getListOfLinks()
+            return self.get_link()
         return link['date'], link['url'], link['first'], link['last']
 
     # input - date as string, index as int
@@ -35,25 +38,28 @@ class Scraper:
         if frame is not None:
             return crawler.switch_frame(frame)
         else:
-            massage = 'could not switch to frame: ' + string
-            crawler.update_log(massage)
+            massage = 'could not switch to frame: {}'.format(string)
+            crawler.update_log(massage, level=4, user='Scraper')
             return False
 
     # input - driver as web driver
     # output - return number of case in the page as int
     def get_num_of_Cases(self, crawler):
+        caseNumLoc = ['/html/body/div[2]/div/form/section/div/div']
         crawler.switch_to_default_content()
         self.get_Frame(crawler, 'id', 'serviceFram')
-        elem = crawler.find_elem('xpath', '/html/body/div[2]/div/form/section/div/div', delay=8)
-        if elem is not None:
-            update = crawler.read_elem_text(elem)
-            text = crawler.get_text_query(update)
-            if text is not None and len(text) > 0:
-                massage = 'this page got ' + text + ' cases'
-                crawler.update_log(massage)
-                return [int(s) for s in text.split() if s.isdigit()][0]
+        for location in caseNumLoc:
+            elem = crawler.find_elem('xpath', location, delay=8)
+            if elem is not None:
+                update = crawler.read_elem_text(elem)
+                text = crawler.get_text_query(update)
+                if text is not None and len(text) > 0:
+                    N = [int(s) for s in text.split() if s.isdigit()][0]
+                    massage = 'this page got {} cases'.format(N)
+                    crawler.update_log(massage, user='Scraper')
+                    return N
         massage = 'could not get this page amount of cases'
-        crawler.update_log(massage)
+        crawler.update_log(massage, level=3, user='Scraper')
         return 500
 
     # input - N as int, first as int, last as int
@@ -99,7 +105,7 @@ class Scraper:
                 massage = 'Scrolled to elem'
             else:
                 massage = 'could not scrolled to case'
-            crawler.update_log(massage)
+            crawler.update_log(massage, level=5, user='Scraper')
 
     # input - driver as web driver, index as int
     # output - return case name as element, otherwise print error massage and return none
@@ -109,12 +115,12 @@ class Scraper:
         if elem is not None:
             case_name = elem.text
             massage = 'Got case name'
-            crawler.update_log(massage)
+            crawler.update_log(massage, user='Scraper')
             crawler.click_elem(elem)
             return case_name
         else:
             massage = 'did not found case name or could not click it'
-            crawler.update_log(massage)
+            crawler.update_log(massage, user='Scraper')
             return None
 
     # input - driver as web driver
@@ -174,7 +180,7 @@ class Scraper:
                 else:
                     xpath = '/html/body/div/div[2]/div[' + str(index) + ']/table/tbody/tr/td[' + str(col) + ']'
 
-                elem = crawler.find_elem('xpath', xpath, raise_error=False)
+                elem = crawler.find_elem('xpath', xpath, raise_error=False, doPrint=False)
                 update = crawler.read_elem_text(elem)
                 text = crawler.get_text_query(update)
 
@@ -194,7 +200,7 @@ class Scraper:
     # output - return column inside text
     def getColumnText(self, crawler, index):
         string = self.get_string_by_index('no info column', index)
-        elem = crawler.find_elem('xpath', string, raise_error=False)
+        elem = crawler.find_elem('xpath', string, raise_error=False, doPrint=False)
         update = crawler.read_elem_text(elem)
         if update is True:  # No info here
             return None
@@ -217,14 +223,14 @@ class Scraper:
     # output - return False if this is a private case, otherwise True
     @staticmethod
     def isBlockedCase(crawler):
-        elem = crawler.find_elem('xpath', '/html/body/table/tbody/tr[1]/td/b', raise_error=False)
+        elem = crawler.find_elem('xpath', '/html/body/table/tbody/tr[1]/td/b', raise_error=False, doPrint=False)
         if elem is not None:
             massage = 'This case in a private !!!'
             result = False
         else:
             massage = 'This case in not private - we can scrape more info'
             result = True
-        crawler.update_log(massage)
+        crawler.update_log(massage, level=3, user='Scraper')
         return result
 
     # input - driver as web driver
@@ -240,10 +246,10 @@ class Scraper:
                     headline = crawler.get_text_query(update)
                     crawler.click_elem(elem)
                     table[headline] = self.getColumnText(crawler, index)
-                    massage = 'got info from column number: ' + str(index)
+                    massage = 'got info from column number: {}'.format(index)
                 else:
-                    massage = 'could not get text or press column number: ' + str(index)
-                crawler.update_log(massage)
+                    massage = 'could not get text or press column number: {}'.format(index)
+                crawler.update_log(massage, level=3, user='Scraper')
         return table
 
     @staticmethod
@@ -251,12 +257,8 @@ class Scraper:
         text = None
         elem = crawler.find_elem('xpath', '/html/body/div[2]/div/div/div[2]/div/div[2]')
         if elem is not None:
-            text = clean_spaces(elem.text)
+            text = clean_spaces(elem.text)  # clean spaces
         return text
-
-    def doc_into_dict(self, text):
-        # TODO DOC into dict
-        pass
 
     # input - driver as web driver
     def getCaseDetails(self, crawler, index):
@@ -269,8 +271,7 @@ class Scraper:
         caseName = self.getCase(crawler, index)
 
         if caseName is not None:
-            case_doc = self.get_doc(crawler)
-            caseDetailsDict['Doc Details'] = case_doc  # self.doc_into_dict(case_doc)
+            caseDetailsDict['Doc Details'] = self.get_doc(crawler)
 
             self.get_Frame(crawler, 'xpath', '/html/body/div[2]/div/div/div[2]/div/div[1]/div/div/iframe')
             caseDetailsDict['Case Details'] = self.getCaseInsideDetails(crawler)
@@ -286,40 +287,39 @@ class Scraper:
     # output (disabled) - return all the cases for the page he see as dict[caseName] = [caseFileDict, caseDetailsDict]
     #                                                    caseFileDict as dict['Case File'] = document text
     #                                                    caseDetailsDict as dict['Case Details'] = Case Details
-    def get_Cases_Data(self, crawler, date, first, last):
-        no_errors, noMoreUpdates = True, False
+    def get_Cases_Data(self, crawler, date, link, first, last):
+        pageLoaded, noMoreUpdates = True, False
         # pick cases
-        N = self.get_num_of_Cases(crawler)
+        N, tries = 500, 3
+        while N == 500 and tries > 0:
+            pageLoaded = crawler.update_page(link, user='Scraper')
+            N = self.get_num_of_Cases(crawler)
+            tries -= 1
+        if pageLoaded is False or N == 500:
+            return None
         start, finish, N = self.case_picker(N, first, last)
-        massage = 'page scrape start at case ' + str(start) + ' and end in case ' + str(finish)
-        crawler.update_log(massage)
-
-        for index in range(start, finish):
+        massage = 'page scrape start at case {} and end in case {}'.format(start, finish)
+        crawler.update_log(massage, level=1, user='Scraper')
+        if finish == 0:
+            UpdateScrapeList(str(date), start, finish)
+        for index in range(start, finish + 1):
             t1 = time()
-            while True:
-                try:
-                    case_details_dict = self.getCaseDetails(crawler, index)
-                    writeJson(get_path(), self.file_Name_for_Json_Case(), case_details_dict, '\\')
+            #while True:
+                #try:
+            case_details_dict = self.getCaseDetails(crawler, index)
+            if case_details_dict['Doc Details'] is not None:
+                writeJson(self.product_path, self.file_Name_for_Json_Case(), case_details_dict)
 
-                    massage = 'Case:', index, ' took in seconds: ', time() - t1
-                    crawler.update_log(massage)
-                    if noMoreUpdates is False:  # will make us scrape this page again in another time if True
-                        UpdateScrapeList(date, index + 1, N)
-                    break
+            massage = 'Case: {} took in seconds: {}'.format(index, time() - t1)
+            crawler.update_log(massage, level=1)
+            UpdateScrapeList(str(date), index + 1, N)
 
-                except:
-                    if no_errors:
-                        no_errors = False
-                        massage = 'first error at scraping case number: ' + str(index) + ' at: ' + date + ' - trying again'
-                        crawler.update_log(massage)
-                        continue
 
-                    no_errors = True
-                    noMoreUpdates = True  # could not get all cases
-                    massage = 'second error at scraping case number: ' + str(index) + ' at: ' + date + ' - Moving to next case'
-                    crawler.update_log(massage)
-                    crawler.refresh()
-                    break
+                #except:
+                #massage = 'second error at scraping case number: {} at: {} - Moving to next case'.format(index, date)
+                #crawler.update_log(massage, level=1, user='Scraper')
+
+                #break
 
     # input - index as int
     def start_crawler(self, index):
@@ -327,19 +327,17 @@ class Scraper:
         while True:
             date, link, first, last = self.get_link()
             if date is None:
-                break
-            massage = 'Starting to scrape date: ' + str(date)
-            crawler.update_log(massage)
+                continue
+            massage = 'Starting to scrape date: {}'.format(date)
+            crawler.update_log(massage, user='Scraper', level=1)
             if first < last or last == -1:
                 t1 = time()
-                skip = crawler.update_page(link)
-                if skip is False:  # didn't load url page
-                    self.get_Cases_Data(crawler, date, first, last)
-                    massage = 'Finished crawling page with the date: ' + str(date) + ', it took ' + str((time() - t1) / 60) + 'minutes'
-                    crawler.update_log(massage)
+                self.get_Cases_Data(crawler, date, link, first, last)
+                massage = 'Finished crawling page with the date: {}, it took {} minutes'.format(date, (time() - t1) / 60)
+                crawler.update_log(massage, user='Scraper', level=1)
             else:
                 massage = 'Nothing to crawl here'
-                crawler.update_log(massage)
+                crawler.update_log(massage, user='Scraper', level=1)
 
         # close web driver
         crawler.close()

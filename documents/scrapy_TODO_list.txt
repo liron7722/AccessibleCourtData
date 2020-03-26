@@ -1,6 +1,8 @@
-- Create a function or Bat file that will run once every 24 hours
-- add function that cheak that if the start date of scrape change it should add it to do the list
-- Add notes what each function does + what it receives and what it returns
-- bug fix:
+- Scrape 2000 or more cases
+- improve scroll to 90+ case
 
+- bug fix:
+	cheak for bugs
+	stuck on same page bug
+	what happen after 90 cases
 

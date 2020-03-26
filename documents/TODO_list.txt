@@ -1,10 +1,13 @@
+- TODO main.py for Project RunAll (Scraper.py + docToDict.py + docToElastic + Elastic)
+- Add notes for each function what it does + what it receives and what it returns
+
 json-schema:
 1. Characterizing all types of characteristics that can be in all courts.
 2. Characterizing the common key attributes that must be included in the json schema.
 3. Characterization The other properties that do not have to be contained in the json schema.
 
 scripts:
-1. Convert JSON product to csv products
-2. Extracting untreated products and transferring them to treatment.
+1. Convert JSON product to csv products - Not Needed
+2. Extracting untreated products and transferring them to treatment. - Done by liron
 3. Index the products to an elastic system
 4. Transfer treated product to a dedicated folder
