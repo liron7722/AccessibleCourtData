@@ -3,7 +3,7 @@ from extra import *
 from Crawler import Crawler
 from threading import Thread
 from time import time, sleep
-from Linker import getListOfLinks, UpdateScrapeList
+from Linker import getLinks, UpdateScrapeList
 
 
 class Scraper:
@@ -13,18 +13,20 @@ class Scraper:
 
     def __init__(self, num_of_crawlers=1):
         self.num_of_crawlers = num_of_crawlers
-        self.links_To_Scrape = getListOfLinks()
+        self.links_To_Scrape = getLinks()
         self.product_path = change_path(get_path(), 'products' + os.sep + 'json_products')
 
     # Functions
     def get_link(self):
         if len(self.links_To_Scrape) > 0:
-            link = self.links_To_Scrape[0]
-            self.links_To_Scrape.remove(link)
+            link = self.links_To_Scrape.popitem()
+            self.links_To_Scrape.popitem(link)
         else:
-            self.links_To_Scrape = getListOfLinks()
+            self.links_To_Scrape = getLinks()
             return self.get_link()
-        return link['date'], link['url'], link['first'], link['last']
+
+        date = list(self.links_To_Scrape.get().keys())[0]
+        return date, link['url'], link['first'], link['last']
 
     # output - return case file name by date and page index as string
     @staticmethod
@@ -97,7 +99,7 @@ class Scraper:
     def scrollIntoView(self, crawler, N):
         result = True
         if N > 90:
-            for index in range(90, N + 1):
+            for index in range(84, N - 5):
                 elem = self.get_elem(crawler, 'case Name', index)
                 result = crawler.scroll_to_elem(elem)
             if result:
