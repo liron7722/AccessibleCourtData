@@ -1,6 +1,7 @@
 import logging
 
-from scripts.relative_path import *
+# from scripts.relative_path import *
+import scripts.relative_path
 
 # create logger
 module_logger = logging.getLogger('status_application.auxiliary')

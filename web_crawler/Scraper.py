@@ -30,7 +30,7 @@ class Scraper:
     # output - return case file name by date and page index as string
     @staticmethod
     def file_Name_for_Json_Case():
-        return my_local_time() + '.json'
+        return my_local_time().replace(' ', '_') + '.json'
 
     @staticmethod
     def get_Frame(crawler, elem_type, string):
@@ -283,6 +283,11 @@ class Scraper:
 
         return caseDetailsDict
 
+    @staticmethod
+    def checkForBackButton(crawler):
+        elem = crawler.find_elem('xpath', '/html/body/div[2]/div/div/section/div/a[1]')
+        return crawler.click_elem(elem, user='Scraper')
+
     # input - driver as web driver
     # output (disabled) - return all the cases for the page he see as dict[caseName] = [caseFileDict, caseDetailsDict]
     #                                                    caseFileDict as dict['Case File'] = document text
@@ -291,10 +296,18 @@ class Scraper:
         pageLoaded, noMoreUpdates = True, False
         # pick cases
         N, tries = 500, 3
+<<<<<<< HEAD
         while N == 500 and tries > 0:
             pageLoaded = crawler.update_page(link, user='Scraper')
             N = self.get_num_of_Cases(crawler)
             tries -= 1
+=======
+        pageLoaded = crawler.update_page(link, user='Scraper')
+        while N == 500 and tries > 0:
+            N = self.get_num_of_Cases(crawler)
+            tries -= 1
+            self.checkForBackButton(crawler)  # in page got only the same case - happen in old dates
+>>>>>>> 4e992556831c469f586ae8f138662b1e533f7d1c
         if pageLoaded is False or N == 500:
             return None
         start, finish, N = self.case_picker(N, first, last)

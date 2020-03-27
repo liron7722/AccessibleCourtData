@@ -1,5 +1,6 @@
 - TODO main.py for Project RunAll (Scraper.py + docToDict.py + docToElastic + Elastic)
 - Add notes for each function what it does + what it receives and what it returns
+- check if selenium installed - if needed to install
 
 json-schema:
 1. Characterizing all types of characteristics that can be in all courts.
