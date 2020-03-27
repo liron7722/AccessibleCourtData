@@ -1,8 +1,5 @@
 from extra import *
-<<<<<<< HEAD
-=======
 import platform
->>>>>>> 4e992556831c469f586ae8f138662b1e533f7d1c
 from Logger import Logger
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException, \
@@ -29,15 +26,10 @@ class Crawler:
         self._log_path = change_path(get_path(), 'logs')
         self.logger = Logger(self._log_name, self._log_path, writeLvl=log_level)
         self.update_log('Initialize')
-<<<<<<< HEAD
-        self._driver = browser(executable_path=get_path() + os.sep + 'chromedriver')  # open Browser
-        self._driver.maximize_window()  # Maximize browser window
-=======
         self._driver = browser() if platform.system() == 'Windows' \
             else browser(executable_path=get_path() + os.sep + 'chromedriver') # open Browser windows
         # self._driver = browser(executable_path=get_path() + os.sep + 'chromedriver')  # open Browser linux
-        self._driver.fullscreen_window()  # Maximize browser window
->>>>>>> 4e992556831c469f586ae8f138662b1e533f7d1c
+        self._driver.maximize_window()  # fullscreen_window()  # Maximize browser window
         self.update_delay(delay)  # update delay
         self.update_page(url)  # open url
         self.update_log('Finished Initialize')
@@ -217,16 +209,11 @@ class Crawler:
     # output - return True if successful, otherwise False
     def click_elem(self, elem, user='Crawler'):
         try:
-<<<<<<< HEAD
-            elem.click()  # click the elem
-            massage = 'element got clicked'
-=======
             if elem is not None:
                 elem.click()  # click the elem
                 massage = 'element got clicked'
             else:
                 massage = 'didnt got element to click - got None instead'
->>>>>>> 4e992556831c469f586ae8f138662b1e533f7d1c
             self.update_log(massage, user=user, level=3)
             return True
 
@@ -281,7 +268,7 @@ class Crawler:
     @staticmethod
     def scroll_to_elem(elem):
         if elem is not None:
-            elem.location_once_scrolled_into_view()  # remove () ?
+            elem.location_once_scrolled_into_view  # remove () ?
             return True
         else:
             return False

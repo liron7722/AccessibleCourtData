@@ -11,7 +11,7 @@ class Scraper:
     links_To_Scrape = None  # list of dict of urls as [[date] = [url], [date] = [url], ...]
     product_path = None
 
-    def __init__(self, num_of_crawlers=2):
+    def __init__(self, num_of_crawlers=1):
         self.num_of_crawlers = num_of_crawlers
         self.links_To_Scrape = getListOfLinks()
         self.product_path = change_path(get_path(), 'products' + os.sep + 'json_products')
@@ -26,11 +26,10 @@ class Scraper:
             return self.get_link()
         return link['date'], link['url'], link['first'], link['last']
 
-    # input - date as string, index as int
     # output - return case file name by date and page index as string
     @staticmethod
-    def file_Name_for_Json_Case():
-        return my_local_time().replace(' ', '_') + '.json'
+    def file_Name_for_Json_Case(index=0):
+        return '{}_{}.json'.format(my_local_time().replace(' ', '_'), index)  # date_time_index.json
 
     @staticmethod
     def get_Frame(crawler, elem_type, string):
@@ -98,7 +97,7 @@ class Scraper:
     def scrollIntoView(self, crawler, N):
         result = True
         if N > 90:
-            for index in range(1, N + 1):
+            for index in range(90, N + 1):
                 elem = self.get_elem(crawler, 'case Name', index)
                 result = crawler.scroll_to_elem(elem)
             if result:
@@ -151,7 +150,7 @@ class Scraper:
         elif index == 7:
             return ['#', 'תיאור בקשה', 'תאריך', 'מגיש', 'נדחה מהמרשם']
 
-    def getGenralDetails(self, crawler, index):
+    def getGeneralDetails(self, crawler, index):
         m_dict = dict()
         title = self.getTitles(index)
         for col in range(len(title)):
@@ -210,7 +209,7 @@ class Scraper:
         sleep(1)
 
         if index == 1:
-            func = self.getGenralDetails
+            func = self.getGeneralDetails
         else:
             func = self.getOtherCaseDetails
 
@@ -293,21 +292,13 @@ class Scraper:
     #                                                    caseFileDict as dict['Case File'] = document text
     #                                                    caseDetailsDict as dict['Case Details'] = Case Details
     def get_Cases_Data(self, crawler, date, link, first, last):
-        pageLoaded, noMoreUpdates = True, False
         # pick cases
         N, tries = 500, 3
-<<<<<<< HEAD
-        while N == 500 and tries > 0:
-            pageLoaded = crawler.update_page(link, user='Scraper')
-            N = self.get_num_of_Cases(crawler)
-            tries -= 1
-=======
         pageLoaded = crawler.update_page(link, user='Scraper')
         while N == 500 and tries > 0:
             N = self.get_num_of_Cases(crawler)
             tries -= 1
             self.checkForBackButton(crawler)  # in page got only the same case - happen in old dates
->>>>>>> 4e992556831c469f586ae8f138662b1e533f7d1c
         if pageLoaded is False or N == 500:
             return None
         start, finish, N = self.case_picker(N, first, last)
@@ -317,22 +308,13 @@ class Scraper:
             UpdateScrapeList(str(date), start, finish)
         for index in range(start, finish + 1):
             t1 = time()
-            #while True:
-                #try:
             case_details_dict = self.getCaseDetails(crawler, index)
             if case_details_dict['Doc Details'] is not None:
-                writeJson(self.product_path, self.file_Name_for_Json_Case(), case_details_dict)
+                writeJson(self.product_path, self.file_Name_for_Json_Case(index), case_details_dict)
 
             massage = 'Case: {} took in seconds: {}'.format(index, time() - t1)
             crawler.update_log(massage, level=1)
             UpdateScrapeList(str(date), index + 1, N)
-
-
-                #except:
-                #massage = 'second error at scraping case number: {} at: {} - Moving to next case'.format(index, date)
-                #crawler.update_log(massage, level=1, user='Scraper')
-
-                #break
 
     # input - index as int
     def start_crawler(self, index):
