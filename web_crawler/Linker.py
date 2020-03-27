@@ -77,14 +77,10 @@ def getListOfLinks():
         startDay, startMonth, startYear = separateDate(mylist[-1]['date'])
         endDay, endMonth, endYear = getTodayDate()
         new_dates = create_list_of_links(int(startDay), int(startMonth), int(startYear), endDay, endMonth, endYear)
-<<<<<<< HEAD
-        if new_dates is not None:
-            mylist.append(new_dates)
-=======
         if len(new_dates) > 0:
             for date in new_dates:
                 mylist.append(date)
->>>>>>> 4e992556831c469f586ae8f138662b1e533f7d1c
+
     else:
         startDay, startMonth, startYear = getStartDate()
         endDay, endMonth, endYear = getTodayDate()
