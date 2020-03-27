@@ -19,9 +19,9 @@ def getStartDate():
 
 # input - day, month and year as int
 # output - return dict[date] = Search url of that date
-def create_list_of_links(startDay, startMonth, startYear, endDay, endMonth, endYear):
+def createLinksDict(startDay, startMonth, startYear, endDay, endMonth, endYear):
     # Initialize
-    list_of_links = list()
+    linkDict = dict()
 
     # Create list of links
     for year in range(startYear, endYear + 1):
@@ -65,39 +65,40 @@ def create_list_of_links(startDay, startMonth, startYear, endDay, endMonth, endY
 
                 date = str_day + '/' + str_month + '/' + str(year)  # Create date in string
                 url = dateURL_P1 + date + dateURL_P2 + date + dateURL_P3  # save link
-                list_of_links.append({'date': date, 'url': url, 'first': 0, 'last': -1})
-
-    return list_of_links
+                linkDict[date] = {'url': url, 'first': 0, 'last': -1}
+    return linkDict
 
 
 # output - return list of links as list(dict{date/link/first,last},dict{date/link/first,last},...)
-def getListOfLinks():
+def getLinks():
     if os.path.isfile(filePath + os.sep + DateListFileName):  # check file exist
-        mylist = readJson(filePath, DateListFileName)
-        startDay, startMonth, startYear = separateDate(mylist[-1]['date'])
+        linkDict = readJson(filePath, DateListFileName)
+        lastOne = len(linkDict)
+        date = list(linkDict.get(lastOne).keys())[0]
+        startDay, startMonth, startYear = separateDate(date)  # separate the Date
         endDay, endMonth, endYear = getTodayDate()
-        new_dates = create_list_of_links(int(startDay), int(startMonth), int(startYear), endDay, endMonth, endYear)
+        new_dates = createLinksDict(int(startDay), int(startMonth), int(startYear), endDay, endMonth, endYear)
         if len(new_dates) > 0:
-            for date in new_dates:
-                mylist.append(date)
+            for date in new_dates.keys():
+                if date in linkDict.keys():
+                    new_dates.pop(date)
+            linkDict.update(new_dates)
 
     else:
         startDay, startMonth, startYear = getStartDate()
         endDay, endMonth, endYear = getTodayDate()
-        mylist = create_list_of_links(startDay, startMonth, startYear, endDay, endMonth, endYear)
+        linkDict = createLinksDict(startDay, startMonth, startYear, endDay, endMonth, endYear)
 
-    writeJson(filePath, DateListFileName, mylist)
-    return mylist
+    writeJson(filePath, DateListFileName, linkDict)
+    return linkDict
 
 
 # input - date as string
 # do - if date in list remove it from the file
 def UpdateScrapeList(date, first, last):
-    mylist = readJson(filePath, DateListFileName)
-    for item in mylist:
-        if date == item['date']:
-            item['first'] = first
-            item['last'] = last
-            break
-    writeJson(filePath, DateListFileName, mylist)
+    linksDict = readJson(filePath, DateListFileName)
+    if date in linksDict.keys():
+        linksDict[date]['first'] = first
+        linksDict[date]['last'] = last
+    writeJson(filePath, DateListFileName, linksDict)
     return True
