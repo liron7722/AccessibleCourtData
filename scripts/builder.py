@@ -20,3 +20,8 @@ def build_wrapper(data):
         'doc': data,
         'doc_as_upsert': True
     }
+
+
+def build_id_to_elastic(json_id):
+    return json_id.replace("\"","").replace("/", "_").replace(" ", "_")
+
