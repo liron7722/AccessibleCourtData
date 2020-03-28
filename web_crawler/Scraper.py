@@ -8,25 +8,23 @@ from Linker import getLinks, UpdateScrapeList
 
 class Scraper:
     num_of_crawlers = None  # number of threads as well
-    links_To_Scrape = None  # list of dict of urls as [[date] = [url], [date] = [url], ...]
-    product_path = None
+    links_To_Scrape = None  # tuple of string, dict of urls as [url as string, first as int, last as int]]
+    product_path = None  # product path as string
 
     def __init__(self, num_of_crawlers=1):
-        self.num_of_crawlers = num_of_crawlers
-        self.links_To_Scrape = getLinks()
-        self.product_path = change_path(get_path(), 'products' + os.sep + 'json_products')
+        self.num_of_crawlers = num_of_crawlers  # Initialize number of crawlers
+        self.links_To_Scrape = getLinks()  # Initialize links to scrape
+        self.product_path = change_path(get_path(), 'products' + os.sep + 'json_products')  # product path
 
     # Functions
     def get_link(self):
-        if len(self.links_To_Scrape) > 0:
-            link = self.links_To_Scrape.popitem()
-            self.links_To_Scrape.popitem(link)
-        else:
-            self.links_To_Scrape = getLinks()
-            return self.get_link()
+        if len(self.links_To_Scrape) > 0:  # check if we got something to scrape
+            linkTuple = self.links_To_Scrape.popitem()  # get last item and remove it
+        else:  # lets start to scan all the items again
+            self.links_To_Scrape = getLinks()  # refresh the dict
+            return self.get_link()  # rerun the function
 
-        date = list(self.links_To_Scrape.get().keys())[0]
-        return date, link['url'], link['first'], link['last']
+        return linkTuple[0], linkTuple[1]['url'], linkTuple[1]['first'], linkTuple[1]['last']
 
     # output - return case file name by date and page index as string
     @staticmethod
@@ -272,6 +270,7 @@ class Scraper:
         caseName = self.getCase(crawler, index)
 
         if caseName is not None:
+            self.fixPageLocation(crawler)
             caseDetailsDict['Doc Details'] = self.get_doc(crawler)
 
             self.get_Frame(crawler, 'xpath', '/html/body/div[2]/div/div/div[2]/div/div[1]/div/div/iframe')
@@ -288,6 +287,11 @@ class Scraper:
     def checkForBackButton(crawler):
         elem = crawler.find_elem('xpath', '/html/body/div[2]/div/div/section/div/a[1]')
         return crawler.click_elem(elem, user='Scraper')
+
+    @staticmethod
+    def fixPageLocation(crawler):
+        elem = crawler.find_elem('xpath', '/html/body/div[2]/div/div/section/div/a[1]')
+        crawler.scroll_to_elem(elem)
 
     # input - driver as web driver
     # output (disabled) - return all the cases for the page he see as dict[caseName] = [caseFileDict, caseDetailsDict]
