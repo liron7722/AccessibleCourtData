@@ -73,9 +73,9 @@ def createLinksDict(startDay, startMonth, startYear, endDay, endMonth, endYear):
 def getLinks():
     if os.path.isfile(filePath + os.sep + DateListFileName):  # check file exist
         linkDict = readJson(filePath, DateListFileName)
-        lastOne = len(linkDict)
-        date = list(linkDict.get(lastOne).keys())[0]
-        startDay, startMonth, startYear = separateDate(date)  # separate the Date
+        link = linkDict.popitem()  # get the last day that scraped, [0] is key as date, [1] is values
+        #linkDict[link[0]] = link[1]   # get back the item we pop
+        startDay, startMonth, startYear = separateDate(link[0])  # separate the Date
         endDay, endMonth, endYear = getTodayDate()
         new_dates = createLinksDict(int(startDay), int(startMonth), int(startYear), endDay, endMonth, endYear)
         if len(new_dates) > 0:
