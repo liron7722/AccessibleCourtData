@@ -27,8 +27,7 @@ class Crawler:
         self.logger = Logger(self._log_name, self._log_path, writeLvl=log_level)
         self.update_log('Initialize')
         self._driver = browser() if platform.system() == 'Windows' \
-            else browser(executable_path=get_path() + os.sep + 'chromedriver') # open Browser windows
-        # self._driver = browser(executable_path=get_path() + os.sep + 'chromedriver')  # open Browser linux
+            else browser(executable_path=get_path() + os.sep + 'chromedriver')  # True if windows, false linux
         self._driver.maximize_window()  # fullscreen_window()  # Maximize browser window
         self.update_delay(delay)  # update delay
         self.update_page(url)  # open url
@@ -264,11 +263,11 @@ class Crawler:
             return False
 
     # input - driver as web driver, N is the index we want to reach as int
-    # do - put in view the item we want to click
+    # do - put in view the item we want
     @staticmethod
     def scroll_to_elem(elem):
         if elem is not None:
-            elem.location_once_scrolled_into_view  # remove () ?
+            elem.location_once_scrolled_into_view  # don't put ()
             return True
         else:
             return False
