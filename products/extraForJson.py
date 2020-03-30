@@ -13,14 +13,14 @@ def get_path():
 
 
 def readJson(path, fileName, side=os.sep):
-    with open(path + side + fileName) as json_file:
+    with open(path + side + fileName, encoding='utf8') as json_file:
         data = json.load(json_file)
     return data
 
 
 def writeJson(path, filename, data, side=os.sep):
     with open(path + side + filename, 'w') as outfile:
-        json.dump(data, outfile, indent=4, ensure_ascii=False)
+        json.dump(data, outfile, indent=4, ensure_ascii=True)
 
 
 def getFilesFromFolder(folderName=get_path(), fileType='json'):
