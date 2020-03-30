@@ -198,7 +198,7 @@ def run():
             doc = readJson('', fileName, side='')  # fileName include path and os.sep not needed
             doc['Doc Details'], succeed = doc_into_dict(doc['Doc Details'])  # if succeed Dict, else text
             writeFolder = handledFolder if succeed else unhandledFolder
-            # os.remove(fileName)
+            os.remove(fileName)
             fileName = change_path(fileName, writeFolder)
             writeJson('', fileName, doc, side='')  # '' = fileName contain the path so no need in path or os.sep
     else:
