@@ -4,10 +4,6 @@ import glob
 from time import sleep
 
 
-def callSleep(days=1, hours=1, minutes=1, seconds=60):
-    sleep(days * hours * minutes * seconds)
-
-
 def get_path():
     return os.path.abspath(os.getcwd())
 
@@ -32,3 +28,10 @@ def change_path(old, new):
     while old[-count] is not os.sep:
         count += 1
     return new + old[len(old) - count:]
+
+
+
+def callSleep(logFunc, days=0, hours=0, minutes=1, seconds=0):
+    massage = f"Going to sleep for {days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
+    logFunc(massage, user='Scraper', level='INFO')
+    sleep((days * 24 * 60 * 60) + (hours * 60 * 60) + (minutes * 60) + seconds)
