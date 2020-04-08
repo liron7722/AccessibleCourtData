@@ -12,8 +12,7 @@ def callSleep(days=1, hours=1, minutes=1, seconds=60):
 
 
 def readJson(path, filename, side=os.sep):
-    with open(path + side + filename) as json_file:
-    #with open(path + side + filename, encoding='utf8') as json_file:
+    with open(path + side + filename, encoding='utf8') as json_file:
         data = json.load(json_file)
     return data
 

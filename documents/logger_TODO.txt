@@ -1,0 +1,3 @@
+- add file size limit
+- add option to continue the log from last file
+- add amount of logs limit
