@@ -18,7 +18,7 @@ class Scraper:
 
     def __init__(self, num_of_crawlers=0):
         self._log_name = 'Scraper.log'  # name log file
-        self._log_path = self.fixPath() + f'{os.sep}Logs{os.sep}'
+        self._log_path = self.fixPath() + f'{os.sep}logs{os.sep}'
         self._logger = self.startLogger()
         self.num_of_crawlers = psutil.cpu_count() if num_of_crawlers == 0 else num_of_crawlers  # 0 = max, else num
         self.links_To_Scrape = getLinks()  # Initialize links to scrape
@@ -287,7 +287,7 @@ class Scraper:
         text = None
         elem = crawler.find_elem('xpath', '/html/body/div[2]/div/div/div[2]/div/div[2]')
         if elem is not None:
-            text = clean_spaces(elem.text)  # clean spaces
+            text = elem.text  # clean spaces
         return text
 
     # input - driver as web driver
