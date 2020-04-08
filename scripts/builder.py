@@ -22,6 +22,7 @@ def build_wrapper(data):
     }
 
 
-def build_id_to_elastic(json_id):
-    return json_id.replace("\"","").replace("/", "_").replace(" ", "_")
-
+def build_id_to_elastic(json_id, unique_name):
+    new_json_id = json_id.replace("\"","").replace("/", "_").replace(" ", "_")
+    new_json_id = "{id}@{date_time}".format(id=new_json_id, date_time=unique_name)
+    return new_json_id
