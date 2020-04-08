@@ -25,7 +25,7 @@ class Crawler:
 
     def __init__(self, index=1, browser=webdriver.Chrome, delay=1, url=None):
         self._log_name = f'crawler_{index}.log'  # name log file
-        self._log_path = self.fixPath() + f'{os.sep}Logs{os.sep}'
+        self._log_path = self.fixPath() + f'{os.sep}logs{os.sep}'
         self._logger = self.startLogger()
         self._driver = browser() if platform.system() == 'Windows' \
             else browser(executable_path=get_path() + os.sep + 'chromedriver')  # True if windows, false linux

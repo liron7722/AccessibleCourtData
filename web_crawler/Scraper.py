@@ -287,7 +287,7 @@ class Scraper:
         text = None
         elem = crawler.find_elem('xpath', '/html/body/div[2]/div/div/div[2]/div/div[2]')
         if elem is not None:
-            text = elem.text  # clean spaces
+            text = elem.text # clean spaces
         return text
 
     # input - driver as web driver
@@ -385,4 +385,4 @@ class Scraper:
 
 # run scraper only if run directly from python and not from import
 if __name__ == "__main__":
-    Scraper(num_of_crawlers=1).start()
+    Scraper(num_of_crawlers=0).start()
