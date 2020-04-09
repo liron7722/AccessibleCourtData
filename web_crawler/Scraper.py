@@ -108,17 +108,17 @@ class Scraper:
     @staticmethod
     def get_string_by_index(xpath, index):
         if xpath == 'case Name':
-            return '/html/body/div[2]/div/form/div/div/div[1]/div[3]/ul/li[' + str(index) + ']/div[2]/a'
+            return f'/html/body/div[2]/div/form/div/div/div[1]/div[3]/ul/li[{index}]/div[2]/a'
         elif xpath == 'column':
-            return '/html/body/div/div[1]/div/div/div[' + str(index) + ']/a'
+            return f'/html/body/div/div[1]/div/div/div[{index}]/a'
         elif xpath == 'inside column':
-            return '/html/body/div/div[2]/div[' + str(index) + ']'
+            return f'/html/body/div/div[2]/div[{index}]'
         elif xpath == 'no info column':
-            return '/html/body/div/div[2]/div[' + str(index) + ']/table/tbody/tr[4]/td/h4'
+            return f'/html/body/div/div[2]/div[{index}]/table/tbody/tr[4]/td/h4'
         elif xpath == 'many rows':
-            return '/html/body/div/div[2]/div[' + str(index) + ']/table/tbody/tr[1]/td[1]'
+            return f'/html/body/div/div[2]/div[{index}]/table/tbody/tr[1]/td[1]'
         elif xpath == 'html':
-            return '/html/body/div[2]/div/form/div/div/div[1]/div[3]/ul/li[' + str(index) + ']/div[4]/div[2]/a[3]'
+            return f'/html/body/div[2]/div/form/div/div/div[1]/div[3]/ul/li[{index}]/div[4]/div[2]/a[3]'
 
     def get_elem(self, crawler, xpath, index):
         string = self.get_string_by_index(xpath, index)

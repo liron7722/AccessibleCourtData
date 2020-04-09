@@ -30,8 +30,8 @@ def change_path(old, new):
     return new + old[len(old) - count:]
 
 
-
-def callSleep(logFunc, days=0, hours=0, minutes=1, seconds=0):
+def callSleep(logFunc=None, days=0, hours=0, minutes=1, seconds=0):
     massage = f"Going to sleep for {days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
-    logFunc(massage, user='Scraper', level='INFO')
+    if logFunc is not None:
+        logFunc(massage)
     sleep((days * 24 * 60 * 60) + (hours * 60 * 60) + (minutes * 60) + seconds)
