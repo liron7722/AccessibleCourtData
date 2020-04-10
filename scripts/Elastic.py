@@ -9,6 +9,7 @@ from pathlib import Path
 from builder import *
 from Moving import Moving
 from relative_path import *
+from json_validator import *
 
 HEADERS = {"Content-Type": "application/json"}
 RULING_INDEX = 'supreme_court_rulings'
@@ -53,15 +54,42 @@ class Elastic:
         return newLogger
 
     def start_index(self):
+        self._logger.info("Start posting information into Elastic")
         directory = get_path(folder=HANDLED_JSON_PRODUCTS_PATH)
         list_of_products = self.getFilesFromFolder(folderName=directory)
         self._logger.info("Get all file from handled_json_products_path folder")
+        if self._schema:
+            self.index_with_schema(list_of_products)
+        else:
+            self.index_without_schema(list_of_products)
+        self._logger.info("The elastic posting process is over at this point")
+
+    def index_with_schema(self, list_of_products):
+        for (idx, product) in enumerate(list_of_products, 1):
+            self._logger.info("Begins file verification")
+            if validate_v1(dataFile=product):
+                self._logger.info("File approved")
+                file_name = os.path.basename(product)
+                self._logger.info("Handles file # {} by name {}".format(idx, file_name))
+                ack = False
+                retry = 1
+                while ack is not True and retry <= 3:
+                    self._logger.info("Attempt to index Elastic # {} of file by name {}".format(retry, file_name))
+                    ack = self.handler(file_to_read=product, file_name=file_name)
+                    retry += 1
+                self._logger.info(
+                    "The file named {} finished the process and moved to its new location".format(file_name))
+                self._moving.move_to_a_new_location(product, ack)
+            else:
+                self._logger.info("File is not approved")
+
+    def index_without_schema(self, list_of_products):
         for (idx, product) in enumerate(list_of_products, 1):
             file_name = os.path.basename(product)
             self._logger.info("Handles file # {} by name {}".format(idx, file_name))
             ack = False
-            retry = 0
-            while ack is not True and retry <= 2:
+            retry = 1
+            while ack is not True and retry <= 3:
                 self._logger.info("Attempt to index Elastic # {} of file by name {}".format(retry, file_name))
                 ack = self.handler(file_to_read=product, file_name=file_name)
                 retry += 1
@@ -89,10 +117,9 @@ class Elastic:
             post_status = self.sent_post_request(url, data)
             return self.check_post_status(post_status)
 
-    def call_sleep(self, logFunc=None, days=0, hours=0, minutes=1, seconds=0):
+    def call_sleep(self, days=0, hours=0, minutes=1, seconds=0):
         massage = f"Going to sleep for {days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
-        if logFunc is not None:
-            logFunc(massage)
+        self._logger.info(massage)
         sleep((days * 24 * 60 * 60) + (hours * 60 * 60) + (minutes * 60) + seconds)
 
 
