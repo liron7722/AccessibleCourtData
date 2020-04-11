@@ -1,30 +1,24 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"description": "validate json object",
-	"title": "test",
-	"type": "object",
-	"additionalProperties": true,
-	"required" : ["סיכום" ,"סוג מסמך", "המשיב", "העותר", "לפני", "מספר הליך"],
-	"patternProperties": {
-	   "Doc Details":{
-	       "מספר הליך": {
-	           "type": "string, null"
-	       },
-	       "לפני": {
-                "type": "array,"
-	       },
-	       "העותר": {
-	           "type": "array"
-	       },
-	       "המשיב": {
-	           "type": "array"
-	       },
-	       "סוג מסמך": {
-	           "type": "string, null"
-	       },
-	       "סיכום": {
-	           "type": "string, null"
-	       }
-        }
+	"$schema":"http://json-schema.org/draft-07/schema#",
+	"description":"validate json object",
+	"title":"supreme_court_rulings",
+	"type":"object",
+	"additionalProperties":true,
+    "required":["Doc Details"],
+	"properties":{
+		"Doc Details":{
+            "type": "object",
+            "required":["לפני", "העותר", "המשיב", "מספר הליך", "סוג מסמך", "סיכום"],
+			"items":{
+				"properties":{
+					"מספר הליך":{"type":"string"},
+                    "לפני":{"type":"array"},
+					"העותר":{"type":"array"},
+					"המשיב":{"type":"array"},
+					"סוג מסמך":{"type":"string"},
+					"סיכום":{"type":"string"}
+				}
+			}
+		}
 	}
 }
