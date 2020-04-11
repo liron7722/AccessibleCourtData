@@ -66,10 +66,10 @@ class Elastic:
 
     def index_with_schema(self, list_of_products):
         for (idx, product) in enumerate(list_of_products, 1):
+            file_name = os.path.basename(product)
             self._logger.info("Begins file verification")
             if validate_v1(dataFile=product):
                 self._logger.info("File approved")
-                file_name = os.path.basename(product)
                 self._logger.info("Handles file # {} by name {}".format(idx, file_name))
                 ack = False
                 retry = 1
@@ -82,6 +82,9 @@ class Elastic:
                 self._moving.move_to_a_new_location(product, ack)
             else:
                 self._logger.info("File is not approved")
+                self._logger.info("UnHandles file # {} by name {}".format(idx, file_name))
+                self._logger.info("The file is moved to an unsuccessful file folder")
+                self._moving.move_to_a_new_location(product, False)
 
     def index_without_schema(self, list_of_products):
         for (idx, product) in enumerate(list_of_products, 1):

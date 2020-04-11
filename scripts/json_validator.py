@@ -6,13 +6,16 @@ DEFAULT_SCHEMA = get_path('json_schema/json_schema.json')
 
 
 def validate_v1(dataFile, schemaFile=DEFAULT_SCHEMA):
-    with open(dataFile, encoding='utf-8') as dataToElastic:
-        elasticData = json.load(dataToElastic)
-    with open(schemaFile, encoding='utf-8') as jsonSchema:
-        schema = json.load(jsonSchema)
-    if jsonschema.validate(elasticData, schema) is None:
-        return True
-    else:
+    try:
+        with open(dataFile, encoding='utf-8') as dataToElastic:
+            elasticData = json.load(dataToElastic)
+        with open(schemaFile, encoding='utf-8') as jsonSchema:
+            schema = json.load(jsonSchema)
+        if jsonschema.validate(elasticData, schema) is None:
+            return True
+        else:
+            return False
+    except:
         return False
 
 
