@@ -21,7 +21,7 @@ class Elastic:
     _moving = None
     _schema = None
 
-    def __init__(self, json_schema=False):
+    def __init__(self, json_schema=True):
         self._log_name = 'Elastic.log'  # name log file
         self._log_path = self.fixPath() + f'{os.sep}logs{os.sep}'
         self._logger = self.startLogger()
