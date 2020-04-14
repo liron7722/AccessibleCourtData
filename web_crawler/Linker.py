@@ -1,4 +1,122 @@
+from time import strftime, localtime
 from extra import *
+from datetime import datetime, timedelta
+
+
+# Functions
+# input - startDate as string, endDate as string, format as string
+# do - generate the fallowing date every call
+def generateDates(startDate='31-12-1996', endDate='01-01-2020', format='%d-%m-%Y'):
+    start = datetime.strptime(startDate, format)
+    end = datetime.strptime(endDate, format)
+    step = timedelta(days=1)
+    while start < end:
+        start += step
+        yield start.date().strftime(format)
+
+
+# input - startDate as string, format as string
+# do - create list of dict contain {'date' as string, 'first' as int, 'last' as int, 'is taken' as boolean}
+def createDates(startDate=None, format="%d-%m-%Y"):
+    dates = list()
+
+    if startDate is None:  # no endDate input so we use today date
+        sD = '31-12-1996'
+    else:
+        sD = startDate.replace('/', '-')
+
+    eD = strftime(format, localtime())
+
+    for date in generateDates(startDate=sD, endDate=eD, format=format):
+        strDate = str(date).replace('-', '/')
+        item = {'date': strDate, 'first': 0, 'last': -1, 'is taken': False}
+        dates.append(item)
+    return dates
+
+
+# do - make sure local file is up to date, if not not exist create one
+def upToDateFile():
+    if os.path.isfile(filePath + os.sep + DateListFileName):  # check file exist
+        datesList = readJson(filePath, DateListFileName)
+        if len(datesList) > 0:
+            item = datesList[-1]  # get the last day that scraped,
+            new_dates = createDates(startDate=item['date'])
+        else:
+            new_dates = createDates()
+
+        if len(new_dates) > 0:
+            datesList.extend(new_dates)
+
+    else:  # local file doesn't exist
+        datesList = createDates()
+    writeJson(filePath, DateListFileName, datesList)  # create\update local file
+
+
+def upToDateDB(db=None):
+    datesList = list()
+    if db is not None:
+        collection = db.get_collection('dates')
+        query = collection.find({})
+        for item in query:
+            item.pop('_id')
+            datesList.append(item)
+
+        new_dates = createDates(startDate=datesList[-1]['date'])
+        datesList.extend(new_dates)
+
+        for item in new_dates:
+            collection = db.get_collection('dates')
+            collection.insert_one(item)
+
+        return datesList
+
+
+# output - return list of links as list({'date': string, first': int, 'last': int, 'is taken': boolean})
+def getLinks(db=None):
+
+    if db is not None:  # use db
+        datesList = upToDateDB(db)
+        writeJson(filePath, DateListFileName, datesList)
+        N = len(datesList)
+        if N > 20:
+            return datesList[N - 20:]
+
+    else:  # use file
+        upToDateFile()
+        datesList = readJson(filePath, DateListFileName)
+
+    return datesList
+
+
+# input - db as database, date as string, first as int, last as int, status as boolean
+# do - update all function relate to the list
+def UpdateScrapeList(db, date, first, last, status):
+    result = []
+    for func in updateFunction:
+        res = func(db, date, first, last, status)
+        result.append(res)
+    return result
+
+
+# input - date as string, first as int, last as int, status as boolean
+def updateDateInFile(db, date, first, last, status):
+    datesList = readJson(filePath, DateListFileName)
+    for item in datesList:
+        if item['date'] == date:
+            item['first'] = first
+            item['last'] = last
+            item['status'] = status
+    writeJson(filePath, DateListFileName, datesList)
+    return True
+
+
+# input - db as database, date as string, first as int, last as int, status as boolean
+def updateDateInDB(db, date, first, last, status):
+    collection = db.get_collection('dates')
+    queryFilter = collection.find({'date': date})
+    for item in queryFilter:
+        collection.update_one(item, {"$set": {'first': first, 'last': last, 'status': status}})
+    return True
 
 
 dateURL_P1 = 'https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate='
@@ -6,98 +124,6 @@ dateURL_P2 = '&CEndDate='
 dateURL_P3 = '&freeText=null&Importance=null'
 
 filePath = get_path()
-DateListFileName = 'ListOfDatesToScrape.json'
+DateListFileName = 'dateList.json'
 
-
-# Functions
-
-# output - return  day, month, year as int
-def getStartDate():
-    day, month, year = 1, 1, 1997
-    return day, month, year
-
-
-# input - day, month and year as int
-# output - return dict[date] = Search url of that date
-def createLinksDict(startDay, startMonth, startYear, endDay, endMonth, endYear):
-    # Initialize
-    linkDict = dict()
-
-    # Create list of links
-    for year in range(startYear, endYear + 1):
-
-        # In case of a leap year we decide how many days in each month
-        maxDay = isThisLeapYear(year)
-
-        # setting month limits
-        if startMonth > 1 and year > startYear:
-            start_M = 1
-        else:
-            start_M = startMonth
-        if endMonth < 12 and year == endYear:
-            end_M = endMonth
-        else:
-            end_M = 12
-
-        for month in range(start_M, end_M + 1):
-            # setting Days limits
-            if startDay > 1 and year > startYear:
-                start_D = 1
-            else:
-                start_D = startDay
-            if month == end_M and year == endYear:
-                end_D = endDay
-            else:
-                end_D = maxDay[month - 1]
-
-            for day in range(start_D, end_D + 1):
-                # set day string
-                if day < 10:
-                    str_day = '0' + str(day)
-                else:
-                    str_day = str(day)
-
-                # set month string
-                if month < 10:
-                    str_month = '0' + str(month)
-                else:
-                    str_month = str(month)
-
-                date = str_day + '/' + str_month + '/' + str(year)  # Create date in string
-                url = dateURL_P1 + date + dateURL_P2 + date + dateURL_P3  # save link
-                linkDict[date] = {'url': url, 'first': 0, 'last': -1}
-    return linkDict
-
-
-# output - return list of links as list(dict{date/link/first,last},dict{date/link/first,last},...)
-def getLinks():
-    if os.path.isfile(filePath + os.sep + DateListFileName):  # check file exist
-        linkDict = readJson(filePath, DateListFileName)
-        link = linkDict.popitem()  # get the last day that scraped, [0] is key as date, [1] is values
-        startDay, startMonth, startYear = separateDate(link[0])  # separate the Date
-        endDay, endMonth, endYear = getTodayDate()
-        new_dates = createLinksDict(int(startDay), int(startMonth), int(startYear), endDay, endMonth, endYear)
-        if len(new_dates) > 0:
-            for date in new_dates.keys():
-                if date in linkDict.keys():
-                    new_dates.pop(date)
-            linkDict.update(new_dates)
-
-    else:
-        startDay, startMonth, startYear = getStartDate()
-        endDay, endMonth, endYear = getTodayDate()
-        linkDict = createLinksDict(startDay, startMonth, startYear, endDay, endMonth, endYear)
-
-    writeJson(filePath, DateListFileName, linkDict)
-    return linkDict
-
-
-# input - date as string
-# do - if date in list remove it from the file
-def UpdateScrapeList(date, first, last):
-    linksDict = readJson(filePath, DateListFileName)
-    if date in linksDict.keys():
-        linksDict[date]['first'] = first
-        linksDict[date]['last'] = last
-    writeJson(filePath, DateListFileName, linksDict)
-    return True
+updateFunction = [updateDateInFile, updateDateInDB]

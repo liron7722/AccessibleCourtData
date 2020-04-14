@@ -4,24 +4,26 @@ import logging
 import logging.handlers
 from extra import *
 import concurrent.futures
-from Crawler import Crawler
-from time import time, sleep, strftime, localtime
-from Linker import getLinks, UpdateScrapeList
+from Crawler import Crawler, WebDriverException
+from time import time, sleep
+from Linker import getLinks, UpdateScrapeList, dateURL_P1, dateURL_P2, dateURL_P3
 from pathlib import Path
+from db import DB
 
 
 class Scraper:
     num_of_crawlers = None  # number of threads as well
     links_To_Scrape = None  # tuple of string, dict of urls as [url as string, first as int, last as int]]
     product_path = None  # product path as string
-    _logger = None
+    logger = None
 
     def __init__(self, num_of_crawlers=0):
-        self._log_name = 'Scraper.log'  # name log file
-        self._log_path = self.fixPath() + f'{os.sep}logs{os.sep}'
-        self._logger = self.startLogger()
+        self.db = DB().get_connection().get_database('SupremeCourt')
+        self.log_name = 'Scraper.log'  # name log file
+        self.log_path = self.fixPath() + f'{os.sep}logs{os.sep}'
+        self.logger = self.startLogger()
         self.num_of_crawlers = psutil.cpu_count() if num_of_crawlers == 0 else num_of_crawlers  # 0 = max, else num
-        self.links_To_Scrape = getLinks()  # Initialize links to scrape
+        self.links_To_Scrape = getLinks(db=self.db)  # Initialize links to scrape
         self.product_path = change_path(get_path(), 'products' + os.sep + 'json_products')  # product path
 
     # Functions
@@ -39,7 +41,7 @@ class Scraper:
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
 
-        file_handler = logging.handlers.RotatingFileHandler(self._log_path + self._log_name, maxBytes=52428800, backupCount=10)
+        file_handler = logging.handlers.RotatingFileHandler(self.log_path + self.log_name, maxBytes=52428800, backupCount=10)
         file_handler.setFormatter(formatter)
 
         newLogger.addHandler(file_handler)
@@ -49,15 +51,24 @@ class Scraper:
         return newLogger
 
     def get_link(self):
+        item = None
         if len(self.links_To_Scrape) > 0:  # check if we got something to scrape
-            linkTuple = self.links_To_Scrape.popitem()  # get last item and remove it
-            self._logger.info(f'crawler took date {linkTuple[0]}')
+            for item in self.links_To_Scrape:
+                if item['is taken'] is False:
+                    self.logger.info(f'crawler took date {item["date"]}')
+                    break
+                else:  # remove items that are in use
+                    self.links_To_Scrape.remove(item)
+
         else:  # lets start to scan all the items again
-            self.links_To_Scrape = getLinks()  # refresh the dict
-            self._logger.info('Loaded list of dates')
+            self.links_To_Scrape = getLinks(db=self.db, fromDB=True)  # refresh the dict
+            for item in self.links_To_Scrape:
+                UpdateScrapeList(self.db, item['date'], item['first'], item['last'], True)
+            self.logger.info('Loaded list of dates')
             return self.get_link()  # rerun the function
 
-        return linkTuple[0], linkTuple[1]['url'], linkTuple[1]['first'], linkTuple[1]['last']
+        url = dateURL_P1 + item['date'] + dateURL_P2 + item['date'] + dateURL_P3
+        return item['date'], url, item['first'], item['last']
 
     # output - return case file name by date and page index as string
     @staticmethod
@@ -70,7 +81,7 @@ class Scraper:
             return crawler.switch_frame(frame)
         else:
             massage = f'could not switch to frame: {string}'
-            self._logger.info(massage)
+            self.logger.info(massage)
             return False
 
     # input - driver as web driver
@@ -87,10 +98,10 @@ class Scraper:
                 if text is not None and len(text) > 0:
                     N = [int(s) for s in text.split() if s.isdigit()][0]
                     massage = 'this page got {} cases'.format(N)
-                    self._logger.info(massage)
+                    self.logger.info(massage)
                     return N
         massage = 'could not get this page amount of cases'
-        self._logger.warning(massage)
+        self.logger.warning(massage)
         return 500
 
     # input - N as int, first as int, last as int
@@ -136,7 +147,7 @@ class Scraper:
                 massage = 'Scrolled to elem'
             else:
                 massage = 'could not scrolled to case'
-            self._logger.debug(massage)
+            self.logger.debug(massage)
 
     # input - driver as web driver, index as int
     # output - return case name as element, otherwise print error massage and return none
@@ -146,12 +157,12 @@ class Scraper:
         if elem is not None:
             case_name = elem.text
             massage = 'Got case name'
-            self._logger.info(massage)
+            self.logger.info(massage)
             crawler.click_elem(elem)
             return case_name
         else:
             massage = 'did not found case name or could not click it'
-            self._logger.warning(massage)
+            self.logger.warning(massage)
             return None
 
     # input - driver as web driver
@@ -260,7 +271,7 @@ class Scraper:
         else:
             massage = 'This case in not private - we can scrape more info'
             result = True
-        self._logger.info(massage)
+        self.logger.info(massage)
         return result
 
     # input - driver as web driver
@@ -279,7 +290,7 @@ class Scraper:
                     massage = 'got info from column number: {}'.format(index)
                 else:
                     massage = 'could not get text or press column number: {}'.format(index)
-                self._logger.info(massage)
+                self.logger.info(massage)
         return table
 
     @staticmethod
@@ -340,43 +351,48 @@ class Scraper:
             return None
         start, finish, N = self.case_picker(N, first, last)
         massage = f'page scrape start at case {start} and end in case {finish}'
-        self._logger.info(massage)
+        self.logger.info(massage)
         if finish == 0:
-            UpdateScrapeList(str(date), start, finish)
-        for index in range(start, finish + 1):
-            t1 = time()
-            case_details_dict = self.getCaseDetails(crawler, index)
-            if case_details_dict['Doc Details'] is not None:
-                writeJson(self.product_path, self.file_Name_for_Json_Case(index), case_details_dict)
+            UpdateScrapeList(self.db, date, start, finish, False)
+        else:
+            for index in range(start, finish + 1):
+                t1 = time()
+                case_details_dict = self.getCaseDetails(crawler, index)
+                if case_details_dict['Doc Details'] is not None:
+                    writeJson(self.product_path, self.file_Name_for_Json_Case(index), case_details_dict)
 
-            massage = f'Case: {index} took in seconds: {time() - t1}'
-            self._logger.info(massage)
-            UpdateScrapeList(str(date), index + 1, N)
+                massage = f'Case: {index} took in seconds: {time() - t1}'
+                self.logger.info(massage)
+                start, finish = index + 1, N
+                UpdateScrapeList(self.db, date, start, finish, True)
+        UpdateScrapeList(self.db, date, start, finish, True)
 
     # input - index as int
     def start_crawler(self, index):
+        canIGO = True
         crawler = Crawler(index=index, delay=2)
-        while True:
+        while canIGO:
             try:
                 date, link, first, last = self.get_link()
-                if date is None:
-                    continue
-                massage = 'Starting to scrape date: {}'.format(date)
-                self._logger.info(massage)
+                massage = f'Starting to scrape date: {date}'
+                self.logger.info(massage)
                 if first < last or last == -1:
                     t1 = time()
                     self.get_Cases_Data(crawler, date, link, first, last)
-                    massage = 'Finished crawling page with the date: {}, it took {} minutes'.format(date, (time() - t1) / 60)
-                    self._logger.info(massage)
+                    massage = f'Finished crawling page with the date: {date}, it took {(time() - t1) / 60} minutes'
+                    self.logger.info(massage)
                 else:
                     massage = 'Nothing to crawl here'
-                    self._logger.info(massage)
+                    self.logger.info(massage)
+            except WebDriverException as exception:
+                message = 'browser closed or crashed - we stop the this crawl'
+                self.logger.exception(message)
+                canIGO = False
             except Exception as exception:
-                self._logger.exception(exception)
-        # close web driver
-        crawler.close()
+                message = 'unknown error'
+                self.logger.exception(message)
 
-    # do - go to each day that not scraped and take all the case files from them
+    # do - take thread from pool and give them assignment
     def start(self):
         with concurrent.futures.ThreadPoolExecutor() as executor:
             indexes = [index for index in range(1, self.num_of_crawlers + 1)]
@@ -385,4 +401,4 @@ class Scraper:
 
 # run scraper only if run directly from python and not from import
 if __name__ == "__main__":
-    Scraper(num_of_crawlers=0).start()
+    Scraper(num_of_crawlers=1).start()

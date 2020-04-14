@@ -6,7 +6,7 @@ from extra import *
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException, \
     ElementNotVisibleException, ElementNotSelectableException, ElementNotInteractableException, NoAlertPresentException, \
-    JavascriptException
+    JavascriptException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
@@ -32,12 +32,19 @@ class Crawler:
         self._logger.info('Finished Initialize')
 
     # Functions
+    # input - path as string, N as int
+    # output fixed path as string
+    # do - remove N folder from path and return it,
+    #   example: path as "/folder1/folder2/folder3/" with n=2 return "/folder1/folder2/"
     @staticmethod
     def fixPath(path=None, N=1):
         path = Path().parent.absolute() if path is None else path
         splitPath = str(path).split(os.sep)
         return f"{os.sep}".join(splitPath[:-N])
 
+    # input - logger as logging class
+    # output - logger as logging class
+    # do - set logger settings
     def startLogger(self, logger=None):
         newLogger = logging.getLogger(__name__) if logger is None else logger
         newLogger.setLevel(logging.DEBUG)
@@ -55,12 +62,17 @@ class Crawler:
         newLogger.info('Initialize')
         return newLogger
 
+    # input - update as boolean
+    # output - return string if true, else None
+    # do - return the last text that got scraped
     def get_text_query(self, update=True):
         if update:
             return self._text_query
         else:
             return None
 
+    # input - delay as int
+    # do - change the main delay for the crawler
     def update_delay(self, delay=1):
         if type(delay) is int:
             self._delay = delay
@@ -69,6 +81,9 @@ class Crawler:
             message = 'Delay input was not int'
         self._logger.info(message)
 
+    # input - url as string
+    # output - return true if succeed else false
+    # do - load the url for the crawler
     def update_page(self, url=None):
         result = False
         if url is not None:
@@ -90,18 +105,23 @@ class Crawler:
         return result
 
     # output - return True if successful
+    # do - close web driver
     def close(self):
         self._driver.quit()  # close the browser
         message = 'Closing browser'
         self._logger.info(message)
         return True
 
+    # output - return True if successful
+    # do - return to previous page
     def go_back(self):
         self._driver.back()
         message = 'went to previous page'
         self._logger.info(message)
         return True
 
+    # output - return True if successful
+    # do - refresh page loaded on crawler
     def refresh(self):
         self._driver.refresh()
         message = 'Refresh page'
@@ -109,6 +129,7 @@ class Crawler:
         return True
 
     # input - frame as web element
+    # do
     def switch_frame(self, frame):
         self._driver.switch_to.frame(frame)
         message = 'switch to frame'
