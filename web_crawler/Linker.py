@@ -68,24 +68,25 @@ def upToDateDB(db=None):
             collection = db.get_collection('dates')
             collection.insert_one(item)
 
-        return datesList
+        writeJson(filePath, DateListFileName, datesList)
 
 
 # output - return list of links as list({'date': string, first': int, 'last': int, 'is taken': boolean})
 def getLinks(db=None):
-
     if db is not None:  # use db
-        datesList = upToDateDB(db)
-        writeJson(filePath, DateListFileName, datesList)
-        N = len(datesList)
-        if N > 20:
-            return datesList[N - 20:]
+        upToDateDB(db)
+        collection = db.get_collection('dates')
+        item = list(collection.find({'is taken': False}).skip(0))[-1]  # last item from non taken dates
+        UpdateScrapeList(db, item['date'], item['first'], item['last'], True)
+        return item
 
     else:  # use file
         upToDateFile()
         datesList = readJson(filePath, DateListFileName)
-
-    return datesList
+        while True:
+            for item in datesList:
+                if item['is taken'] == False:
+                    return item
 
 
 # input - db as database, date as string, first as int, last as int, status as boolean
@@ -105,7 +106,7 @@ def updateDateInFile(db, date, first, last, status):
         if item['date'] == date:
             item['first'] = first
             item['last'] = last
-            item['status'] = status
+            item['is taken'] = status
     writeJson(filePath, DateListFileName, datesList)
     return True
 
@@ -115,7 +116,7 @@ def updateDateInDB(db, date, first, last, status):
     collection = db.get_collection('dates')
     queryFilter = collection.find({'date': date})
     for item in queryFilter:
-        collection.update_one(item, {"$set": {'first': first, 'last': last, 'status': status}})
+        collection.update_one(item, {"$set": {'first': first, 'last': last, 'is taken': status}})
     return True
 
 
@@ -127,3 +128,9 @@ filePath = get_path()
 DateListFileName = 'dateList.json'
 
 updateFunction = [updateDateInFile, updateDateInDB]
+
+#from db import DB
+#db = DB().get_connection().get_database('SupremeCourt')
+#collection = db.get_collection('dates')
+#corsor = list(collection.find({'is taken': False}).skip(0))
+#print(corsor[-1])

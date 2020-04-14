@@ -13,7 +13,6 @@ from db import DB
 
 class Scraper:
     num_of_crawlers = None  # number of threads as well
-    links_To_Scrape = None  # tuple of string, dict of urls as [url as string, first as int, last as int]]
     product_path = None  # product path as string
     logger = None
 
@@ -23,7 +22,6 @@ class Scraper:
         self.log_path = self.fixPath() + f'{os.sep}logs{os.sep}'
         self.logger = self.startLogger()
         self.num_of_crawlers = psutil.cpu_count() if num_of_crawlers == 0 else num_of_crawlers  # 0 = max, else num
-        self.links_To_Scrape = getLinks(db=self.db)  # Initialize links to scrape
         self.product_path = change_path(get_path(), 'products' + os.sep + 'json_products')  # product path
 
     # Functions
@@ -51,24 +49,13 @@ class Scraper:
         return newLogger
 
     def get_link(self):
-        item = None
-        if len(self.links_To_Scrape) > 0:  # check if we got something to scrape
-            for item in self.links_To_Scrape:
-                if item['is taken'] is False:
-                    self.logger.info(f'crawler took date {item["date"]}')
-                    break
-                else:  # remove items that are in use
-                    self.links_To_Scrape.remove(item)
-
-        else:  # lets start to scan all the items again
-            self.links_To_Scrape = getLinks(db=self.db, fromDB=True)  # refresh the dict
-            for item in self.links_To_Scrape:
-                UpdateScrapeList(self.db, item['date'], item['first'], item['last'], True)
-            self.logger.info('Loaded list of dates')
-            return self.get_link()  # rerun the function
-
-        url = dateURL_P1 + item['date'] + dateURL_P2 + item['date'] + dateURL_P3
-        return item['date'], url, item['first'], item['last']
+        item = getLinks(self.db)
+        if item is not None:
+            self.logger.info(f'crawler took date {item["date"]}')
+            url = dateURL_P1 + item['date'] + dateURL_P2 + item['date'] + dateURL_P3
+            return item['date'], url, item['first'], item['last']
+        self.logger.info(f'Did not get dates from db or file')
+        return None, None, None, None
 
     # output - return case file name by date and page index as string
     @staticmethod
@@ -365,7 +352,7 @@ class Scraper:
                 self.logger.info(massage)
                 start, finish = index + 1, N
                 UpdateScrapeList(self.db, date, start, finish, True)
-        UpdateScrapeList(self.db, date, start, finish, True)
+        UpdateScrapeList(self.db, date, start, finish, False)
 
     # input - index as int
     def start_crawler(self, index):
