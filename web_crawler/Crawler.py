@@ -53,7 +53,7 @@ class Crawler:
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
 
-        file_handler = logging.handlers.RotatingFileHandler(self._log_path + self._log_name, maxBytes=52428800, backupCount=10)
+        file_handler = logging.handlers.RotatingFileHandler(self._log_path + self._log_name, maxBytes=10485760, backupCount=10)
         file_handler.setFormatter(formatter)
 
         newLogger.addHandler(file_handler)

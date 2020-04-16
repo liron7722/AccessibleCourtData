@@ -76,9 +76,14 @@ def getLinks(db=None):
     if db is not None:  # use db
         upToDateDB(db)
         collection = db.get_collection('dates')
-        item = list(collection.find({'is taken': False}).skip(0))[-1]  # last item from non taken dates
-        UpdateScrapeList(db, item['date'], item['first'], item['last'], True)
-        return item
+        dateList = list(collection.find({'is taken': False}).skip(0))
+        if len(dateList) > 0:
+            item = dateList[-1]  # last item from non taken dates
+            UpdateScrapeList(db, item['date'], item['first'], item['last'], True)
+            return item
+        else:
+            resetDatesInDB(db)
+            return getLinks(db)
 
     else:  # use file
         upToDateFile()
@@ -120,6 +125,12 @@ def updateDateInDB(db, date, first, last, status):
     return True
 
 
+def resetDatesInDB(db):
+    collection = db.get_collection('dates')
+    corsor = collection.find({'is taken': True})
+    for item in corsor:
+        collection.update_one(item, {'$set': {'is taken': False}})
+
 dateURL_P1 = 'https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate='
 dateURL_P2 = '&CEndDate='
 dateURL_P3 = '&freeText=null&Importance=null'
@@ -128,9 +139,3 @@ filePath = get_path()
 DateListFileName = 'dateList.json'
 
 updateFunction = [updateDateInFile, updateDateInDB]
-
-#from db import DB
-#db = DB().get_connection().get_database('SupremeCourt')
-#collection = db.get_collection('dates')
-#corsor = list(collection.find({'is taken': False}).skip(0))
-#print(corsor[-1])

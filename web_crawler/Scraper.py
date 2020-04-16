@@ -39,7 +39,7 @@ class Scraper:
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
 
-        file_handler = logging.handlers.RotatingFileHandler(self.log_path + self.log_name, maxBytes=52428800, backupCount=10)
+        file_handler = logging.handlers.RotatingFileHandler(self.log_path + self.log_name, maxBytes=10485760, backupCount=10)
         file_handler.setFormatter(formatter)
 
         newLogger.addHandler(file_handler)
@@ -54,7 +54,7 @@ class Scraper:
             self.logger.info(f'crawler took date {item["date"]}')
             url = dateURL_P1 + item['date'] + dateURL_P2 + item['date'] + dateURL_P3
             return item['date'], url, item['first'], item['last']
-        self.logger.info(f'Did not get dates from db or file')
+        self.logger.info('Did not get dates from db or file')
         return None, None, None, None
 
     # output - return case file name by date and page index as string
@@ -340,7 +340,7 @@ class Scraper:
         massage = f'page scrape start at case {start} and end in case {finish}'
         self.logger.info(massage)
         if finish == 0:
-            UpdateScrapeList(self.db, date, start, finish, False)
+            UpdateScrapeList(self.db, date, start, finish, True)
         else:
             for index in range(start, finish + 1):
                 t1 = time()
@@ -352,11 +352,11 @@ class Scraper:
                 self.logger.info(massage)
                 start, finish = index + 1, N
                 UpdateScrapeList(self.db, date, start, finish, True)
-        UpdateScrapeList(self.db, date, start, finish, False)
 
     # input - index as int
     def start_crawler(self, index):
         canIGO = True
+        sleep(index)  # make crawlers start in different times to ensure they dont take the same page
         crawler = Crawler(index=index, delay=2)
         while canIGO:
             try:
@@ -367,10 +367,9 @@ class Scraper:
                     t1 = time()
                     self.get_Cases_Data(crawler, date, link, first, last)
                     massage = f'Finished crawling page with the date: {date}, it took {(time() - t1) / 60} minutes'
-                    self.logger.info(massage)
                 else:
                     massage = 'Nothing to crawl here'
-                    self.logger.info(massage)
+                self.logger.info(massage)
             except WebDriverException as exception:
                 message = 'browser closed or crashed - we stop the this crawl'
                 self.logger.exception(message)
