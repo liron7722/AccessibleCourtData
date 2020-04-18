@@ -4,7 +4,7 @@ DOMAIN = "localhost"
 PORT = 9200
 
 
-def is_connected(self, hostname=DOMAIN, port=PORT):
+def is_connected(hostname=DOMAIN, port=PORT):
     try:
         # see if we can resolve the host name -- tells us if there is
         # a DNS listening
@@ -16,3 +16,7 @@ def is_connected(self, hostname=DOMAIN, port=PORT):
         return True
     except:
         return False
+
+#
+# if __name__ == '__main__':
+#     print(is_connected())
