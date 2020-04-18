@@ -15,4 +15,4 @@ curl -i -XPOST --user 'elastic:changeme' 'http://localhost:9200/court/_update/12
 
 curl -X DELETE --user 'elastic:changeme' 'http://localhost:9200/supreme_court_rulings'
 
-
+curl -X GET --user 'elastic:changeme' 'http://localhost:9200/supreme_court_rulings/_doc/בגץ_7715_19@46-39_43'

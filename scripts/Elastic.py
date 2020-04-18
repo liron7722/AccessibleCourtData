@@ -10,23 +10,29 @@ from builder import *
 from Moving import Moving
 from relative_path import *
 from json_validator import *
+from internet import *
 
 HEADERS = {"Content-Type": "application/json"}
-RULING_INDEX = 'supreme_court_rulings'
-HANDLED_JSON_PRODUCTS_PATH = "products/handled_json_products"
+RULING_INDEX = 'supreme_court_rulings_test'
+HANDLED_JSON_PRODUCTS_PATH = "products/handled_json_products_test"
+THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME = 100
+
+elasticsearch_index_list = list()
 
 
 class Elastic:
     _logger = None
     _moving = None
     _schema = None
+    _counter = None
 
-    def __init__(self, json_schema=True):
+    def __init__(self, json_schema=True, the_amount_of_delivery=THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME):
         self._log_name = 'Elastic.log'  # name log file
         self._log_path = self.fixPath() + f'{os.sep}logs{os.sep}'
         self._logger = self.startLogger()
         self._moving = Moving()
         self._schema = json_schema
+        self._counter = the_amount_of_delivery
 
     # Functions
     @staticmethod
@@ -43,7 +49,7 @@ class Elastic:
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
 
-        file_handler = logging.handlers.RotatingFileHandler(self._log_path + self._log_name, maxBytes=52428800,
+        file_handler = logging.handlers.RotatingFileHandler(self._log_path + self._log_name, maxBytes=10485760,
                                                             backupCount=10)
         file_handler.setFormatter(formatter)
 
@@ -56,7 +62,7 @@ class Elastic:
     def start_index(self):
         self._logger.info("Start posting information into Elastic")
         directory = get_path(folder=HANDLED_JSON_PRODUCTS_PATH)
-        list_of_products = self.getFilesFromFolder(folderName=directory)
+        list_of_products = self.get_files_from_folder(folderName=directory)
         self._logger.info("Get all file from handled_json_products_path folder")
         if self._schema:
             self.index_with_schema(list_of_products)
@@ -64,8 +70,20 @@ class Elastic:
             self.index_without_schema(list_of_products)
         self._logger.info("The elastic posting process is over at this point")
 
+        with open('listfile.txt', 'w') as filehandle:
+            for listitem in elasticsearch_index_list:
+                filehandle.write('%s\n' % listitem)
+
     def index_with_schema(self, list_of_products):
         for (idx, product) in enumerate(list_of_products, 1):
+            if idx % self._counter == 0:
+                self._logger.info("Testing in front of Elastic server")
+                if not is_connected():  # check if elastic is up
+                    self._logger.info("Elastic server is not available, please try later")
+                    return
+                else:
+                    self._logger.info("Elastic server is available")
+
             file_name = os.path.basename(product)
             self._logger.info("Begins file verification")
             if validate_v1(dataFile=product):
@@ -88,6 +106,14 @@ class Elastic:
 
     def index_without_schema(self, list_of_products):
         for (idx, product) in enumerate(list_of_products, 1):
+            if idx % self._counter == 0:
+                self._logger.info("Testing in front of Elastic server")
+                if not is_connected():  # check if elastic is up
+                    self._logger.info("Elastic server is not available, please try later")
+                    return
+                else:
+                    self._logger.info("Elastic server is available")
+
             file_name = os.path.basename(product)
             self._logger.info("Handles file # {} by name {}".format(idx, file_name))
             ack = False
@@ -102,23 +128,76 @@ class Elastic:
     def sent_post_request(self, url, datafile):
         return requests.post(url, data=json.dumps(datafile), auth=('elastic', 'changeme'), headers=HEADERS)
 
-    def check_post_status(self, status):
+    def check_status_code(self, status):
         self._logger.info("The Elastic file revenue status code is {} ".format(status.status_code))
-        if 200 == status.status_code or 201 == status.status_code:
+        if 200 <= status.status_code <= 299:
             return True
         return False
 
-    def getFilesFromFolder(self, folderName, fileType='json'):
+    def get_files_from_folder(self, folderName, fileType='json'):
         return [f for f in glob.glob(folderName + os.sep + "*." + fileType)]
+
+    def send_get_request(self, url):
+        return requests.get(url, auth=('elastic', 'changeme'))
+
+    def comparison_data(self, data_to_post, data_from_elastic):
+        result = data_to_post['Doc Details']['מספר הליך'] in data_from_elastic['_source']['Doc Details']['מספר הליך'] or \
+                 data_from_elastic['_source']['Doc Details']['מספר הליך'] in data_to_post['Doc Details']['מספר הליך'] or \
+                 data_from_elastic['_source']['Doc Details']['מספר הליך'] == "null" and \
+                 data_to_post['Doc Details']['לפני'] in data_from_elastic['_source']['Doc Details']['לפני'] or \
+                 data_from_elastic['_source']['Doc Details']['לפני'] in data_to_post['Doc Details']['לפני'] or \
+                 data_from_elastic['_source']['Doc Details']['לפני'] == "null" and \
+                 data_to_post['Doc Details']['העותר'] in data_from_elastic['_source']['Doc Details']['העותר'] or \
+                 data_from_elastic['_source']['Doc Details']['העותר'] in data_to_post['Doc Details']['העותר'] or \
+                 data_from_elastic['Doc Details']['העותר'] == "null" and \
+                 data_to_post['Doc Details']['המשיב'] in data_from_elastic['_source']['Doc Details']['המשיב'] or \
+                 data_from_elastic['_source']['Doc Details']['המשיב'] in data_to_post['Doc Details']['המשיב'] or \
+                 data_from_elastic['Doc Details']['המשיב'] == "null" and \
+                 data_to_post['Doc Details']['סוג מסמך'] in data_from_elastic['_source']['Doc Details']['סוג מסמך'] or \
+                 data_from_elastic['_source']['Doc Details']['סוג מסמך'] in data_to_post['Doc Details']['סוג מסמך'] or \
+                 data_from_elastic['Doc Details']['סוג מסמך'] == "null" and \
+                 data_to_post['Doc Details']['סיכום'] in data_from_elastic['_source']['Doc Details']['סיכום'] or \
+                 data_from_elastic['_source']['Doc Details']['סיכום'] in data_to_post['Doc Details']['סיכום'] or \
+                 data_from_elastic['Doc Details']['סיכום'] == "null"
+        return result
 
     def handler(self, file_to_read, file_name):
         with open(file_to_read, encoding='utf-8') as json_file:
-            json_data = json.load(json_file)
-            id_from_json = json_data['Doc Details']['מספר הליך']
-            elastic_id = build_elastic_id(json_id=id_from_json, unique_name=file_name[-13:-5])
-            url, data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elastic_id)
-            post_status = self.sent_post_request(url, data)
-            return self.check_post_status(post_status)
+            json_data = json.load(json_file)  # Load json file
+            id_from_json = json_data['Doc Details']['מספר הליך']  # Take procedure number from json file
+
+            elasticsearch_id = build_elasticsearch_id(json_id=id_from_json)  # Build id to get and post request
+            get_url = build_get_request(index=RULING_INDEX, id=elasticsearch_id)  # Build get request url
+            get_result = self.send_get_request(url=get_url)  # Send get request
+            data_from_elastic = get_result.json()  # Convert result from get request to json format
+
+            if self.check_status_code(get_result) is False and data_from_elastic['found'] is False:
+                # Build post request url and data
+                post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
+                post_status = self.sent_post_request(post_url, post_data)  # Do post request and get post status
+                elasticsearch_index_list.append(elasticsearch_id)
+                return self.check_status_code(post_status)  # Check type of status code and return
+
+            while self.check_status_code(get_result) and data_from_elastic['found'] is True:
+                the_result_of_the_comparison = self.comparison_data(data_to_post=json_data, data_from_elastic=data_from_elastic)
+                if the_result_of_the_comparison:
+                    post_status = self.sent_post_request(post_url, post_data)
+                    elasticsearch_index_list.append(elasticsearch_id)
+                    return self.check_status_code(post_status)
+                else:
+                    elasticsearch_id = rebuilding_id(elasticsearch_id)
+                    get_url = build_get_request(index=RULING_INDEX, id=elasticsearch_id)
+                    get_result = self.send_get_request(get_url)
+                    data_from_elastic = get_result.json()
+
+            if self.check_status_code(get_result) is False and data_from_elastic['found'] is False:
+                post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
+                post_status = self.sent_post_request(post_url, post_data)
+                elasticsearch_index_list.append(elasticsearch_id)
+                return self.check_status_code(post_status)
+
+            elasticsearch_index_list.append(elasticsearch_id)
+            return False
 
     def call_sleep(self, days=0, hours=0, minutes=1, seconds=0):
         massage = f"Going to sleep for {days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
