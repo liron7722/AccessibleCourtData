@@ -15,7 +15,12 @@ from internet import *
 HEADERS = {"Content-Type": "application/json"}
 RULING_INDEX = 'supreme_court_rulings_test'
 HANDLED_JSON_PRODUCTS_PATH = "products/handled_json_products_test"
+NUMBER_OF_REPETITIONS_IN_CASE_OF_FAILURE = 5
 THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME = 100
+DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER = 5
+
+GET_REQUEST = "GET"
+POST_REQUEST = "POST"
 
 elasticsearch_index_list = list()
 
@@ -91,7 +96,7 @@ class Elastic:
                 self._logger.info("Handles file # {} by name {}".format(idx, file_name))
                 ack = False
                 retry = 1
-                while ack is not True and retry <= 3:
+                while ack is not True and retry <= NUMBER_OF_REPETITIONS_IN_CASE_OF_FAILURE:
                     self._logger.info("Attempt to index Elastic # {} of file by name {}".format(retry, file_name))
                     ack = self.handler(file_to_read=product, file_name=file_name)
                     retry += 1
@@ -128,8 +133,8 @@ class Elastic:
     def sent_post_request(self, url, datafile):
         return requests.post(url, data=json.dumps(datafile), auth=('elastic', 'changeme'), headers=HEADERS)
 
-    def check_status_code(self, status):
-        self._logger.info("The Elastic file revenue status code is {} ".format(status.status_code))
+    def check_status_code(self, status, type_of_request):
+        self._logger.info("{type_of_request}: The Elastic file revenue status code is {status} ".format(type_of_request=type_of_request, status=status.status_code))
         if 200 <= status.status_code <= 299:
             return True
         return False
@@ -163,41 +168,68 @@ class Elastic:
 
     def handler(self, file_to_read, file_name):
         with open(file_to_read, encoding='utf-8') as json_file:
-            json_data = json.load(json_file)  # Load json file
-            id_from_json = json_data['Doc Details']['מספר הליך']  # Take procedure number from json file
+            try:
+                json_data = json.load(json_file)  # Load json file
+                self._logger.info("The file was successfully loaded")
+                id_from_json = json_data['Doc Details']['מספר הליך']  # Take procedure number from json file
+                self._logger.info("The procedure number is taken from the file for further treatment")
 
-            elasticsearch_id = build_elasticsearch_id(json_id=id_from_json)  # Build id to get and post request
-            get_url = build_get_request(index=RULING_INDEX, id=elasticsearch_id)  # Build get request url
-            get_result = self.send_get_request(url=get_url)  # Send get request
-            data_from_elastic = get_result.json()  # Convert result from get request to json format
+                elasticsearch_id = build_elasticsearch_id(json_id=id_from_json)  # Build id to get and post request
+                self._logger.info("ID successfully built")
+                get_url = build_get_request(index=RULING_INDEX, id=elasticsearch_id)  # Build get request url
+                self._logger.info("Successfully built get request URL")
+                self.sleep_now()
+                get_result = self.send_get_request(url=get_url)  # Send get request
+                self._logger.info("GET request sent")
+                data_from_elastic = get_result.json()  # Convert result from get request to json format
 
-            if self.check_status_code(get_result) is False and data_from_elastic['found'] is False:
-                # Build post request url and data
-                post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
-                post_status = self.sent_post_request(post_url, post_data)  # Do post request and get post status
-                elasticsearch_index_list.append(elasticsearch_id)
-                return self.check_status_code(post_status)  # Check type of status code and return
-
-            while self.check_status_code(get_result) and data_from_elastic['found'] is True:
-                the_result_of_the_comparison = self.comparison_data(data_to_post=json_data, data_from_elastic=data_from_elastic)
-                if the_result_of_the_comparison:
-                    post_status = self.sent_post_request(post_url, post_data)
+                if self.check_status_code(get_result, GET_REQUEST) is False and data_from_elastic['found'] is False:
+                    # Build post request url and data
+                    post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
+                    self._logger.info("Successfully built post request URL and data")
+                    self.sleep_now()
+                    post_status = self.sent_post_request(post_url, post_data)  # Do post request and get post status
                     elasticsearch_index_list.append(elasticsearch_id)
-                    return self.check_status_code(post_status)
-                else:
-                    elasticsearch_id = rebuilding_id(elasticsearch_id)
-                    get_url = build_get_request(index=RULING_INDEX, id=elasticsearch_id)
-                    get_result = self.send_get_request(get_url)
-                    data_from_elastic = get_result.json()
+                    return self.check_status_code(post_status, POST_REQUEST)  # Check type of status code and return
 
-            if self.check_status_code(get_result) is False and data_from_elastic['found'] is False:
-                post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
-                post_status = self.sent_post_request(post_url, post_data)
+                while self.check_status_code(get_result, GET_REQUEST) and data_from_elastic['found'] is True:
+                    the_result_of_the_comparison = self.comparison_data(data_to_post=json_data, data_from_elastic=data_from_elastic)
+                    self._logger.info("The result of comparison is: {result} ".format(result=the_result_of_the_comparison))
+                    if the_result_of_the_comparison:
+                        post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
+                        self.sleep_now()
+                        post_status = self.sent_post_request(post_url, post_data)
+                        self._logger.info("POST request sent")
+                        elasticsearch_index_list.append(elasticsearch_id)
+                        return self.check_status_code(post_status, POST_REQUEST)
+                    else:
+                        elasticsearch_id = rebuilding_id(elasticsearch_id)
+                        self._logger.info("ID successfully rebuild")
+                        get_url = build_get_request(index=RULING_INDEX, id=elasticsearch_id)
+                        self._logger.info("Successfully built get request URL")
+                        self.sleep_now()
+                        get_result = self.send_get_request(get_url)
+                        self._logger.info("GET request sent")
+                        data_from_elastic = get_result.json()
+
+                if self.check_status_code(get_result, GET_REQUEST) is False and data_from_elastic['found'] is False:
+                    post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
+                    self._logger.info("Successfully built post request URL and data")
+                    self.sleep_now()
+                    post_status = self.sent_post_request(post_url, post_data)
+                    self._logger.info("POST request sent")
+                    elasticsearch_index_list.append(elasticsearch_id)
+                    return self.check_status_code(post_status, POST_REQUEST)
+
                 elasticsearch_index_list.append(elasticsearch_id)
-                return self.check_status_code(post_status)
+                return False
+            except:
+                return False
 
-            elasticsearch_index_list.append(elasticsearch_id)
-            return False
+    def sleep_now(self):
+        self._logger.info("The system is delayed for {0} seconds".format(DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER))
+        sleep(DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER)
+        self._logger.info("The delay is over")
 
     def call_sleep(self, days=0, hours=0, minutes=1, seconds=0):
         massage = f"Going to sleep for {days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
