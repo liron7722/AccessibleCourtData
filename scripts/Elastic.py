@@ -15,14 +15,12 @@ from internet import *
 HEADERS = {"Content-Type": "application/json"}
 RULING_INDEX = 'supreme_court_rulings_test'
 HANDLED_JSON_PRODUCTS_PATH = "products/handled_json_products_test"
+INDEXES_FILE_LOCATION = "products/indexes.txt"
 NUMBER_OF_REPETITIONS_IN_CASE_OF_FAILURE = 5
 THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME = 100
-DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER = 5
-
+DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER = 2  # In seconds
 GET_REQUEST = "GET"
 POST_REQUEST = "POST"
-
-elasticsearch_index_list = list()
 
 
 class Elastic:
@@ -30,6 +28,8 @@ class Elastic:
     _moving = None
     _schema = None
     _counter = None
+    _elk_id = None
+    _elasticsearch_indexes_list = None
 
     def __init__(self, json_schema=True, the_amount_of_delivery=THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME):
         self._log_name = 'Elastic.log'  # name log file
@@ -38,6 +38,7 @@ class Elastic:
         self._moving = Moving()
         self._schema = json_schema
         self._counter = the_amount_of_delivery
+        self._elasticsearch_indexes_list = list()
 
     # Functions
     @staticmethod
@@ -75,13 +76,19 @@ class Elastic:
             self.index_without_schema(list_of_products)
         self._logger.info("The elastic posting process is over at this point")
 
-        with open('listfile.txt', 'w') as filehandle:
-            for listitem in elasticsearch_index_list:
-                filehandle.write('%s\n' % listitem)
-
     def index_with_schema(self, list_of_products):
         for (idx, product) in enumerate(list_of_products, 1):
+            if idx == 1:
+                self._logger.info("Testing in front of Elastic server")
+                if not is_connected():  # check if elastic is up
+                    self._logger.info("Elastic server is not available, please try later")
+                    return
+                else:
+                    self._logger.info("Elastic server is available")
+
             if idx % self._counter == 0:
+                self._logger.info("Writing the results of Elastic posting in the index file")
+                self.write_indexes_to_file()
                 self._logger.info("Testing in front of Elastic server")
                 if not is_connected():  # check if elastic is up
                     self._logger.info("Elastic server is not available, please try later")
@@ -98,10 +105,11 @@ class Elastic:
                 retry = 1
                 while ack is not True and retry <= NUMBER_OF_REPETITIONS_IN_CASE_OF_FAILURE:
                     self._logger.info("Attempt to index Elastic # {} of file by name {}".format(retry, file_name))
-                    ack = self.handler(file_to_read=product, file_name=file_name)
+                    ack, self._elk_id = self.handler(file_to_read=product)
                     retry += 1
-                self._logger.info(
-                    "The file named {} finished the process and moved to its new location".format(file_name))
+                if ack is True:
+                    self._elasticsearch_indexes_list.append("{id}::{file_name}".format(id=self._elk_id, file_name=file_name))
+                self._logger.info("The file named {} finished the process and moved to its new location".format(file_name))
                 self._moving.move_to_a_new_location(product, ack)
             else:
                 self._logger.info("File is not approved")
@@ -109,9 +117,23 @@ class Elastic:
                 self._logger.info("The file is moved to an unsuccessful file folder")
                 self._moving.move_to_a_new_location(product, False)
 
+        if not self._elasticsearch_indexes_list:
+            self._logger.info("Writing the results of Elastic posting in the index file")
+            self.write_indexes_to_file()
+
     def index_without_schema(self, list_of_products):
         for (idx, product) in enumerate(list_of_products, 1):
+            if idx == 1:
+                self._logger.info("Testing in front of Elastic server")
+                if not is_connected():  # check if elastic is up
+                    self._logger.info("Elastic server is not available, please try later")
+                    return
+                else:
+                    self._logger.info("Elastic server is available")
+
             if idx % self._counter == 0:
+                self._logger.info("Writing the results of Elastic posting in the index file")
+                self.write_indexes_to_file()
                 self._logger.info("Testing in front of Elastic server")
                 if not is_connected():  # check if elastic is up
                     self._logger.info("Elastic server is not available, please try later")
@@ -125,10 +147,42 @@ class Elastic:
             retry = 1
             while ack is not True and retry <= 3:
                 self._logger.info("Attempt to index Elastic # {} of file by name {}".format(retry, file_name))
-                ack = self.handler(file_to_read=product, file_name=file_name)
+                ack, self._elk_id = self.handler(file_to_read=product)
                 retry += 1
+            if ack is True:
+                self._elasticsearch_indexes_list.append("{id}::{file_name}".format(id=self._elk_id, file_name=file_name))
             self._logger.info("The file named {} finished the process and moved to its new location".format(file_name))
             self._moving.move_to_a_new_location(product, ack)
+
+        if not self._elasticsearch_indexes_list:
+            self._logger.info("Writing the results of Elastic posting in the index file")
+            self.write_indexes_to_file()
+
+
+    def write_indexes_to_file(self):
+        path = get_path(folder=INDEXES_FILE_LOCATION)
+        list_of_indexes = self._elasticsearch_indexes_list
+
+        # first append all indexes to file
+        with open(path, "a") as file:
+            for line in list_of_indexes:
+                file.write(line + '\n')
+            file.close()
+
+        # second get all lines from file
+        with open(path, 'r') as file:
+            lines = file.readlines()
+            file.close()
+
+        # remove spaces
+        lines = [line.replace(' ', '') for line in lines]
+        lines.sort()
+
+        # finally, write lines in the file
+        with open(path, 'w') as file:
+            file.writelines(lines)
+            file.close()
+        self._elasticsearch_indexes_list = list()
 
     def sent_post_request(self, url, datafile):
         return requests.post(url, data=json.dumps(datafile), auth=('elastic', 'changeme'), headers=HEADERS)
@@ -166,7 +220,7 @@ class Elastic:
                  data_from_elastic['Doc Details']['סיכום'] == "null"
         return result
 
-    def handler(self, file_to_read, file_name):
+    def handler(self, file_to_read):
         with open(file_to_read, encoding='utf-8') as json_file:
             try:
                 json_data = json.load(json_file)  # Load json file
@@ -189,8 +243,8 @@ class Elastic:
                     self._logger.info("Successfully built post request URL and data")
                     self.sleep_now()
                     post_status = self.sent_post_request(post_url, post_data)  # Do post request and get post status
-                    elasticsearch_index_list.append(elasticsearch_id)
-                    return self.check_status_code(post_status, POST_REQUEST)  # Check type of status code and return
+                    self._logger.info("POST request sent")
+                    return self.check_status_code(post_status, POST_REQUEST), elasticsearch_id  # Check type of status code and return
 
                 while self.check_status_code(get_result, GET_REQUEST) and data_from_elastic['found'] is True:
                     the_result_of_the_comparison = self.comparison_data(data_to_post=json_data, data_from_elastic=data_from_elastic)
@@ -198,10 +252,9 @@ class Elastic:
                     if the_result_of_the_comparison:
                         post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
                         self.sleep_now()
-                        post_status = self.sent_post_request(post_url, post_data)
+                        post_status = self.sent_post_request(post_url, post_data)  # Do post request and get post status
                         self._logger.info("POST request sent")
-                        elasticsearch_index_list.append(elasticsearch_id)
-                        return self.check_status_code(post_status, POST_REQUEST)
+                        return self.check_status_code(post_status, POST_REQUEST), elasticsearch_id  # Check type of status code and return
                     else:
                         elasticsearch_id = rebuilding_id(elasticsearch_id)
                         self._logger.info("ID successfully rebuild")
@@ -216,15 +269,13 @@ class Elastic:
                     post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
                     self._logger.info("Successfully built post request URL and data")
                     self.sleep_now()
-                    post_status = self.sent_post_request(post_url, post_data)
+                    post_status = self.sent_post_request(post_url, post_data)  # Do post request and get post status
                     self._logger.info("POST request sent")
-                    elasticsearch_index_list.append(elasticsearch_id)
-                    return self.check_status_code(post_status, POST_REQUEST)
-
-                elasticsearch_index_list.append(elasticsearch_id)
-                return False
+                    return self.check_status_code(post_status, POST_REQUEST), elasticsearch_id  # Check type of status code and return
+                return False, None
             except:
-                return False
+                self._logger.info("There was an error event")
+                return False, None
 
     def sleep_now(self):
         self._logger.info("The system is delayed for {0} seconds".format(DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER))
