@@ -51,5 +51,5 @@ def rebuilding_id(current_id):
     # Promoting the number runner in 1 format from x to x + 1
     next_number = current_number + 1
     # Rebuilding the ID
-    new_elasticsearch_id = "{partial_id}-{number}".format(partial_id=partial_id, number=next_number)
+    new_elasticsearch_id = "{partial_id}{number}".format(partial_id=partial_id, number=next_number)
     return new_elasticsearch_id
