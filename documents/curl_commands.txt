@@ -11,8 +11,8 @@ Curl -X GET “http://localhost:9200/_script/*.script”
 Curl -X DELETE “http://localhost:9200/_script/*.script”
 
 
-curl -i -XPOST --user 'elastic:changeme' 'http://localhost:9200/court/_update/121?pretty' --data-ascii '@19-03-2020_12-50-44.json' -H 'Content-Type:application/json'
+curl -i -XPOST --user 'elastic:changeme' 'http://localhost:9200/supreme_court_rulings_test/_update/test?pretty' --data-ascii '@19-03-2020_12-50-44.json' -H 'Content-Type:application/json'
 
-curl -X DELETE --user 'elastic:changeme' 'http://localhost:9200/supreme_court_rulings'
+curl -X DELETE --user 'elastic:changeme' 'http://localhost:9200/supreme_court_rulings_test'
 
-
+curl -X GET --user 'elastic:changeme' 'http://localhost:9200/supreme_court_rulings_test/_doc/בגץ_7715_19@46-39_43'
