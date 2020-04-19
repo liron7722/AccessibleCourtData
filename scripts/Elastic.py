@@ -18,7 +18,7 @@ HANDLED_JSON_PRODUCTS_PATH = "products/handled_json_products_test"
 INDEXES_FILE_LOCATION = "products/indexes.txt"
 NUMBER_OF_REPETITIONS_IN_CASE_OF_FAILURE = 5
 THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME = 100
-DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER = 2  # In seconds
+DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER = 3  # In seconds
 GET_REQUEST = "GET"
 POST_REQUEST = "POST"
 
@@ -117,7 +117,7 @@ class Elastic:
                 self._logger.info("The file is moved to an unsuccessful file folder")
                 self._moving.move_to_a_new_location(product, False)
 
-        if not self._elasticsearch_indexes_list:
+        if self._elasticsearch_indexes_list:
             self._logger.info("Writing the results of Elastic posting in the index file")
             self.write_indexes_to_file()
 
@@ -154,10 +154,9 @@ class Elastic:
             self._logger.info("The file named {} finished the process and moved to its new location".format(file_name))
             self._moving.move_to_a_new_location(product, ack)
 
-        if not self._elasticsearch_indexes_list:
+        if self._elasticsearch_indexes_list:
             self._logger.info("Writing the results of Elastic posting in the index file")
             self.write_indexes_to_file()
-
 
     def write_indexes_to_file(self):
         path = get_path(folder=INDEXES_FILE_LOCATION)
@@ -200,25 +199,27 @@ class Elastic:
         return requests.get(url, auth=('elastic', 'changeme'))
 
     def comparison_data(self, data_to_post, data_from_elastic):
-        result = data_to_post['Doc Details']['מספר הליך'] in data_from_elastic['_source']['Doc Details']['מספר הליך'] or \
-                 data_from_elastic['_source']['Doc Details']['מספר הליך'] in data_to_post['Doc Details']['מספר הליך'] or \
-                 data_from_elastic['_source']['Doc Details']['מספר הליך'] == "null" and \
-                 data_to_post['Doc Details']['לפני'] in data_from_elastic['_source']['Doc Details']['לפני'] or \
-                 data_from_elastic['_source']['Doc Details']['לפני'] in data_to_post['Doc Details']['לפני'] or \
-                 data_from_elastic['_source']['Doc Details']['לפני'] == "null" and \
-                 data_to_post['Doc Details']['העותר'] in data_from_elastic['_source']['Doc Details']['העותר'] or \
-                 data_from_elastic['_source']['Doc Details']['העותר'] in data_to_post['Doc Details']['העותר'] or \
-                 data_from_elastic['Doc Details']['העותר'] == "null" and \
-                 data_to_post['Doc Details']['המשיב'] in data_from_elastic['_source']['Doc Details']['המשיב'] or \
-                 data_from_elastic['_source']['Doc Details']['המשיב'] in data_to_post['Doc Details']['המשיב'] or \
-                 data_from_elastic['Doc Details']['המשיב'] == "null" and \
-                 data_to_post['Doc Details']['סוג מסמך'] in data_from_elastic['_source']['Doc Details']['סוג מסמך'] or \
-                 data_from_elastic['_source']['Doc Details']['סוג מסמך'] in data_to_post['Doc Details']['סוג מסמך'] or \
-                 data_from_elastic['Doc Details']['סוג מסמך'] == "null" and \
-                 data_to_post['Doc Details']['סיכום'] in data_from_elastic['_source']['Doc Details']['סיכום'] or \
-                 data_from_elastic['_source']['Doc Details']['סיכום'] in data_to_post['Doc Details']['סיכום'] or \
-                 data_from_elastic['Doc Details']['סיכום'] == "null"
-        return result
+        self._logger.info("Starting to compare")
+        result1 = self.checks_if_identical(data_to_post['Doc Details']['מספר הליך'], data_from_elastic['_source']['Doc Details']['מספר הליך'])
+        self._logger.info("Result 1: {0}".format(result1))
+        result2 = self.checks_if_identical(data_to_post['Doc Details']['לפני'], data_from_elastic['_source']['Doc Details']['לפני'])
+        self._logger.info("Result 1: {0}".format(result2))
+        result3 = self.checks_if_identical(data_to_post['Doc Details']['העותר'], data_from_elastic['_source']['Doc Details']['העותר'])
+        self._logger.info("Result 1: {0}".format(result3))
+        result4 = self.checks_if_identical(data_to_post['Doc Details']['המשיב'], data_from_elastic['_source']['Doc Details']['המשיב'])
+        self._logger.info("Result 1: {0}".format(result4))
+        result5 = self.checks_if_identical(data_to_post['Doc Details']['סוג מסמך'], data_from_elastic['_source']['Doc Details']['סוג מסמך'])
+        self._logger.info("Result 1: {0}".format(result5))
+        result6 = self.checks_if_identical(data_to_post['Doc Details']['סיכום'], data_from_elastic['_source']['Doc Details']['סיכום'])
+        self._logger.info("Result 1: {0}".format(result6))
+        self._logger.info("The comparison is over and starts to calculate a result")
+        total_result = result1 and result2 and result3 and result4 and result4 and result5 and result6
+        return total_result
+
+    def checks_if_identical(self, data_to_post, data_from_elastic):
+        if data_to_post == data_from_elastic or data_from_elastic == "null":
+            return True
+        return False
 
     def handler(self, file_to_read):
         with open(file_to_read, encoding='utf-8') as json_file:
