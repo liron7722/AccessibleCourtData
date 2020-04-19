@@ -53,9 +53,17 @@ class Scraper:
         if item is not None:
             self.logger.info(f'crawler took date {item["date"]}')
             url = dateURL_P1 + item['date'] + dateURL_P2 + item['date'] + dateURL_P3
-            return item['date'], url, item['first'], item['last']
+            return item['date'], url, item['first'], item['last'], item['case List']
         self.logger.info('Did not get dates from db or file')
-        return None, None, None, None
+        return None, None, None, None, None
+
+    def getSettings(self, key):
+        collection = self.db.get_collection('settings')
+        query = collection.find({})
+        for item in query:
+            if key in item:
+                return item[key]
+        return None
 
     # output - return case file name by date and page index as string
     @staticmethod
@@ -285,7 +293,7 @@ class Scraper:
         text = None
         elem = crawler.find_elem('xpath', '/html/body/div[2]/div/div/div[2]/div/div[2]')
         if elem is not None:
-            text = elem.text # clean spaces
+            text = elem.text  # clean spaces
         return text
 
     # input - driver as web driver
@@ -322,11 +330,7 @@ class Scraper:
         elem = crawler.find_elem('xpath', '/html/body/div[2]/div/div/section/div/a[1]')
         crawler.scroll_to_elem(elem)
 
-    # input - driver as web driver
-    # output (disabled) - return all the cases for the page he see as dict[caseName] = [caseFileDict, caseDetailsDict]
-    #                                                    caseFileDict as dict['Case File'] = document text
-    #                                                    caseDetailsDict as dict['Case Details'] = Case Details
-    def get_Cases_Data(self, crawler, date, link, first, last):
+    def checkCaseNum(self, crawler, link):
         # pick cases
         N, tries = 500, 3
         pageLoaded = crawler.update_page(link)
@@ -334,15 +338,25 @@ class Scraper:
             N = self.get_num_of_Cases(crawler)
             tries -= 1
             self.checkForBackButton(crawler)  # in page got only the same case - happen in old dates
+        return N, pageLoaded
+
+    # input - driver as web driver
+    # output (disabled) - return all the cases for the page he see as dict[caseName] = [caseFileDict, caseDetailsDict]
+    #                                                    caseFileDict as dict['Case File'] = document text
+    #                                                    caseDetailsDict as dict['Case Details'] = Case Details
+    def get_Cases_Data(self, crawler, date, link, first, last, caseList):
+        N, pageLoaded =  self.checkCaseNum(crawler, link)
         if pageLoaded is False or N == 500:
             return None
         start, finish, N = self.case_picker(N, first, last)
-        massage = f'page scrape start at case {start} and end in case {finish}'
-        self.logger.info(massage)
+
         if finish == 0:
-            UpdateScrapeList(self.db, date, start, finish, True)
+            UpdateScrapeList(self.db, date, start, finish, True, caseList)
         else:
-            for index in range(start, finish + 1):
+            caseList = [i for i in range(1, N + 1)] if len(caseList) == 0 else caseList
+            massage = f'page scrape cases {caseList}'
+            self.logger.info(massage)
+            for index in caseList:
                 t1 = time()
                 case_details_dict = self.getCaseDetails(crawler, index)
                 if case_details_dict['Doc Details'] is not None:
@@ -350,33 +364,42 @@ class Scraper:
 
                 massage = f'Case: {index} took in seconds: {time() - t1}'
                 self.logger.info(massage)
-                start, finish = index + 1, N
-                UpdateScrapeList(self.db, date, start, finish, True)
+                caseList.remove(index)
+                UpdateScrapeList(self.db, date, index + 1, N, True, caseList)
 
     # input - index as int
     def start_crawler(self, index):
-        canIGO = True
-        sleep(index)  # make crawlers start in different times to ensure they dont take the same page
-        crawler = Crawler(index=index, delay=2)
+        crawler = None
+        canIGO = self.getSettings('crawler Run')
+        sleep(index)  # make crawlers start in different times to ensure they don't take the same page
+
         while canIGO:
+            crawler = Crawler(index=index, delay=2) if crawler is None else crawler
             try:
-                date, link, first, last = self.get_link()
-                massage = f'Starting to scrape date: {date}'
-                self.logger.info(massage)
-                if first < last or last == -1:
+                date, link, first, last, caseList = self.get_link()
+                if first <= last or last == -1:
+                    massage = f'Starting to scrape date: {date}'
+                    self.logger.info(massage)
                     t1 = time()
-                    self.get_Cases_Data(crawler, date, link, first, last)
+                    self.get_Cases_Data(crawler, date, link, first, last, caseList)
                     massage = f'Finished crawling page with the date: {date}, it took {(time() - t1) / 60} minutes'
                 else:
                     massage = 'Nothing to crawl here'
                 self.logger.info(massage)
-            except WebDriverException as exception:
-                message = 'browser closed or crashed - we stop the this crawl'
+
+            except WebDriverException as _:
+                message = f'browser closed or crashed - restart value is {canIGO}'
                 self.logger.exception(message)
-                canIGO = False
-            except Exception as exception:
+            except Exception as _:
                 message = 'unknown error'
                 self.logger.exception(message)
+            finally:
+                canIGO = self.getSettings('crawler Run')
+
+        if crawler is not None:
+            crawler.close()
+        callSleep(minutes=10)
+        self.start_crawler(index=index)
 
     # do - take thread from pool and give them assignment
     def start(self):

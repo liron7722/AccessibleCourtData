@@ -29,7 +29,7 @@ def createDates(startDate=None, format="%d-%m-%Y"):
 
     for date in generateDates(startDate=sD, endDate=eD, format=format):
         strDate = str(date).replace('-', '/')
-        item = {'date': strDate, 'first': 0, 'last': -1, 'is taken': False}
+        item = {'date': strDate, 'first': 0, 'last': -1, 'is taken': False, 'case List': []}
         dates.append(item)
     return dates
 
@@ -79,7 +79,7 @@ def getLinks(db=None):
         dateList = list(collection.find({'is taken': False}).skip(0))
         if len(dateList) > 0:
             item = dateList[-1]  # last item from non taken dates
-            UpdateScrapeList(db, item['date'], item['first'], item['last'], True)
+            UpdateScrapeList(db, item['date'], item['first'], item['last'], True, item['case List'])
             return item
         else:
             resetDatesInDB(db)
@@ -96,40 +96,38 @@ def getLinks(db=None):
 
 # input - db as database, date as string, first as int, last as int, status as boolean
 # do - update all function relate to the list
-def UpdateScrapeList(db, date, first, last, status):
+def UpdateScrapeList(db, date, first, last, status, case_List):
     result = []
     for func in updateFunction:
-        res = func(db, date, first, last, status)
+        res = func(db, date, first, last, status, case_List)
         result.append(res)
     return result
 
 
 # input - date as string, first as int, last as int, status as boolean
-def updateDateInFile(db, date, first, last, status):
+def updateDateInFile(db, date, first, last, status, case_List):
     datesList = readJson(filePath, DateListFileName)
     for item in datesList:
         if item['date'] == date:
             item['first'] = first
             item['last'] = last
             item['is taken'] = status
+            item['case List'] = case_List
     writeJson(filePath, DateListFileName, datesList)
     return True
 
 
 # input - db as database, date as string, first as int, last as int, status as boolean
-def updateDateInDB(db, date, first, last, status):
+def updateDateInDB(db, date, first, last, status, case_List):
     collection = db.get_collection('dates')
-    queryFilter = collection.find({'date': date})
-    for item in queryFilter:
-        collection.update_one(item, {"$set": {'first': first, 'last': last, 'is taken': status}})
+    collection.update_one({'date': date},
+                          {"$set": {'first': first, 'last': last, 'is taken': status, 'case List': case_List}})
     return True
 
 
 def resetDatesInDB(db):
     collection = db.get_collection('dates')
-    corsor = collection.find({'is taken': True})
-    for item in corsor:
-        collection.update_one(item, {'$set': {'is taken': False}})
+    collection.update_many({}, {'$set': {'is taken': False}})
 
 dateURL_P1 = 'https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate='
 dateURL_P2 = '&CEndDate='
