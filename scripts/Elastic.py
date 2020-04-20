@@ -13,8 +13,8 @@ from json_validator import *
 from internet import *
 
 HEADERS = {"Content-Type": "application/json"}
-RULING_INDEX = 'supreme_court_rulings_test'
-HANDLED_JSON_PRODUCTS_PATH = "products/handled_json_products_test"
+RULING_INDEX = 'supreme_court_rulings'
+HANDLED_JSON_PRODUCTS_PATH = "products/handled_json_products"
 INDEXES_FILE_LOCATION = "products/indexes.txt"
 NUMBER_OF_REPETITIONS_IN_CASE_OF_FAILURE = 5
 THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME = 100
@@ -203,15 +203,15 @@ class Elastic:
         result1 = self.checks_if_identical(data_to_post['Doc Details']['מספר הליך'], data_from_elastic['_source']['Doc Details']['מספר הליך'])
         self._logger.info("Result 1: {0}".format(result1))
         result2 = self.checks_if_identical(data_to_post['Doc Details']['לפני'], data_from_elastic['_source']['Doc Details']['לפני'])
-        self._logger.info("Result 1: {0}".format(result2))
+        self._logger.info("Result 2: {0}".format(result2))
         result3 = self.checks_if_identical(data_to_post['Doc Details']['העותר'], data_from_elastic['_source']['Doc Details']['העותר'])
-        self._logger.info("Result 1: {0}".format(result3))
+        self._logger.info("Result 3: {0}".format(result3))
         result4 = self.checks_if_identical(data_to_post['Doc Details']['המשיב'], data_from_elastic['_source']['Doc Details']['המשיב'])
-        self._logger.info("Result 1: {0}".format(result4))
+        self._logger.info("Result 4: {0}".format(result4))
         result5 = self.checks_if_identical(data_to_post['Doc Details']['סוג מסמך'], data_from_elastic['_source']['Doc Details']['סוג מסמך'])
-        self._logger.info("Result 1: {0}".format(result5))
+        self._logger.info("Result 5: {0}".format(result5))
         result6 = self.checks_if_identical(data_to_post['Doc Details']['סיכום'], data_from_elastic['_source']['Doc Details']['סיכום'])
-        self._logger.info("Result 1: {0}".format(result6))
+        self._logger.info("Result 6: {0}".format(result6))
         self._logger.info("The comparison is over and starts to calculate a result")
         total_result = result1 and result2 and result3 and result4 and result4 and result5 and result6
         return total_result

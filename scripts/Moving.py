@@ -1,8 +1,8 @@
 import shutil
 from relative_path import *
 
-FAILURE_FOLDER = "products/unhandled_json_products_test"
-SUCCESS_FOLDER = "products/upload_json_to_elastic_test"
+FAILURE_FOLDER = "products/unhandled_json_products"
+SUCCESS_FOLDER = "products/upload_json_to_elastic"
 
 
 class Moving:
