@@ -5,7 +5,7 @@
 		doc_into_dict Functions - better manage
 	
 	bugs:
-		missing values for 'בשם המשיב'
+		
 		bad seperation between strings in 'בשם העותר\המשיב' maybe in 'לפני' as well
 		check if '\n' (line drop) in 'מידע נוסף' and 'סיכום' need to be a ' ' (space)
 
