@@ -125,3 +125,7 @@ filePath = getPath(N=2) + f'products{sep}'
 DateListFileName = 'dateList.json'
 
 updateFunction = [updateDateInFile, updateDateInDB]
+
+#from ILCourtScraper.Extra.db import DB
+#db = DB().getDB('SupremeCourt')
+#resetDatesInDB(db)

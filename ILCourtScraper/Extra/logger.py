@@ -17,7 +17,7 @@ class Logger:
     def startLogger(logName, logPath, logger=None):
         path = logPath if logPath is not None else ""
         name = logName if logName is not None else "NoName.log"
-        newLogger = logging.getLogger(__name__) if logger is None else logger
+        newLogger = logging.getLogger(logName) if logger is None else logger
         createDir(path)
 
         newLogger.setLevel(logging.DEBUG)

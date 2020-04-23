@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys
+sys.path.insert(1, '../..')
 from psutil import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from ILCourtScraper.Extra.db import DB
