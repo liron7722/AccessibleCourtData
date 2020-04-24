@@ -1,5 +1,6 @@
 from pymongo import MongoClient
-from ILCourtScraper.Extra.config import DB_URI
+
+DB_URI = "mongodb+srv://ACD:FX6xH18gcFXX0W5U@accessiblecourtdata-vu2ls.mongodb.net/test?retryWrites=true&w=majority"
 
 
 class DB:
