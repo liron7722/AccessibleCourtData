@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-
+import sys
+sys.path.insert(1, '../..')
 from ILCourtScraper.Scrapers.Scraper import *
 from ILCourtScraper.Extra.json import saveData
 from ILCourtScraper.Extra.time import callSleep, time
@@ -369,4 +370,7 @@ class SupremeCourtScraper(Scraper):
 # run scraper only if run directly from python and not from import
 if __name__ == "__main__":
     scraper = SupremeCourtScraper(numOfCrawlers=1)
-    scraper.start()
+    with ThreadPoolExecutor() as executor:
+        indexes = [index for index in range(1, scraper.getNumOfCrawlers() + 1)]
+        executor.map(scraper.start_crawler, indexes)
+

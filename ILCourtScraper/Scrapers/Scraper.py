@@ -22,6 +22,9 @@ class Scraper:
         createDir(self.product_path)
 
     # Functions
+    def getNumOfCrawlers(self):
+        return self.num_of_crawlers
+
     # output - return case file name by date and page index as string
     @staticmethod
     def randomName(index=0):
@@ -40,9 +43,3 @@ class Scraper:
 
     def start_crawler(self, index):
         return NotImplementedError
-
-    # do - take thread from pool and give them assignment
-    def start(self):
-        with ThreadPoolExecutor() as executor:
-            indexes = [index for index in range(1, self.num_of_crawlers + 1)]
-            executor.map(self.start_crawler, indexes)
