@@ -366,11 +366,15 @@ class SupremeCourtScraper(Scraper):
         callSleep(minutes=10)
         self.start_crawler(index=index)
 
+    def start(self):
+        with ThreadPoolExecutor() as executor:
+            indexes = [index for index in range(1, scraper.getNumOfCrawlers() + 1)]
+            executor.map(self.start_crawler, indexes)
+
 
 # run scraper only if run directly from python and not from import
 if __name__ == "__main__":
     scraper = SupremeCourtScraper(numOfCrawlers=1)
-    with ThreadPoolExecutor() as executor:
-        indexes = [index for index in range(1, scraper.getNumOfCrawlers() + 1)]
-        executor.map(scraper.start_crawler, indexes)
+    scraper.start_crawler(1)
+
 
