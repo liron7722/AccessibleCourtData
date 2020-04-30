@@ -19,7 +19,7 @@ class Crawler:
     _logger = None  # logging log class
 
     def __init__(self, index=1, browser='chrome', delay=1, url=None):
-        self._logger = Logger(f'{__name__}crawler_{index}.log', getPath(N=2) + f'logs{sep}').getLogger()
+        self._logger = Logger(f'crawler_{index}.log', getPath(N=2) + f'logs{sep}{__name__}{sep}').getLogger()
         self._driver = self.getBrowser(browser)
         self._driver.maximize_window()  # fullscreen_window()  # Maximize browser window
         self.update_delay(delay)  # update delay
@@ -36,7 +36,7 @@ class Crawler:
         elif browser == 'firefox':
             if system() == 'Windows':
                 return webdriver.Firefox(executable_path=getPath(N=1) + f'WebDrivers{sep}geckodriver.exe')
-            return webdriver.Firefox(executable_path=getPath(N=1) + f'WebDrivers{sep}geckodriver')  # TODO add path
+            return webdriver.Firefox(executable_path=getPath(N=1) + f'WebDrivers{sep}geckodriver')
         elif browser == 'edge':
             if system() == 'Windows':
                 return webdriver.Edge(executable_path=getPath(N=1) + f'WebDrivers{sep}msedgedriver.exe')
