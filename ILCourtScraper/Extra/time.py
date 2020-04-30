@@ -6,10 +6,10 @@ def currTime(numSep='-', dateTimeSep='_'):
     return strftime(f"%d{numSep}%m{numSep}%Y{dateTimeSep}%H{numSep}%M{numSep}%S", localtime())
 
 
-def callSleep(logFunc=None, days=0, hours=0, minutes=0, seconds=0):
-    massage = f"Scraper Going to sleep for {days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
-    if logFunc is not None:
-        logFunc.info(massage)
+def callSleep(logger=None, days=0, hours=0, minutes=0, seconds=0):
+    massage = f"Going to sleep for {days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
+    if logger is not None:
+        logger.info(massage)
     sleep((days * 24 * 60 * 60) + (hours * 60 * 60) + (minutes * 60) + seconds)
 
 
