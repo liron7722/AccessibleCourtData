@@ -1,11 +1,12 @@
+from ILCourtScraper.Extra.logger import Logger
 from ILCourtScraper.Extra.time import callSleep
 from ILCourtScraper.Extra.json import readData, saveData
 from ILCourtScraper.Extra.path import getPath, sep, createDir, changeDir, getFiles
 
-readFolder = getPath(N=2) + f'products{sep}json_products'
-handledFolder = getPath(N=2) + sep + f'products{sep}handled_json_products'
-unhandledFolder = getPath(N=2) + sep + f'products{sep}unhandled_json_products'
-backupFolder = getPath(N=2) + sep + f'products{sep}backup_json_products'
+readFolder = getPath(N=2) + f'products{sep}json_products{sep}'
+handledFolder = getPath(N=2) + sep + f'products{sep}handled_json_products{sep}'
+unhandledFolder = getPath(N=2) + sep + f'products{sep}unhandled_json_products{sep}'
+backupFolder = getPath(N=2) + sep + f'products{sep}backup_json_products{sep}'
 
 
 def clean_spaces(text):
@@ -194,22 +195,40 @@ def parser(text):
     return text, False
 
 
-def run():
+def run(logger=None):
     listOfFiles = getFiles(folderPath=readFolder)
+    message = f"Got {len(listOfFiles)} files to parse..."
+    logger.info(message) if logger is not None else print(message)
     if len(listOfFiles) > 0:
+        index = 0
+        counter = 0
         for fileName in listOfFiles:
+            index += 1
+            message = f"Starting to parse file {index} of {len(listOfFiles)}... "
+            logger.info(message) if logger is not None else print(message, end='')
             doc = readData('', fileName)  # fileName include path and os.sep not needed
             doc['Doc Details'], succeed = parser(doc['Doc Details'])  # if succeed Dict, else text
             writeFolder = handledFolder if succeed else unhandledFolder
             changeDir(fileName, backupFolder)  # backup files
             fileName = fileName.replace(readFolder, '')  # extract file name
-            saveData(writeFolder, fileName, doc)  # '' = fileName contain the path so no need in path or os.sep
+            saveData(doc, fileName, writeFolder)
+            if succeed:
+                counter += 1
+                logger.info(f"File {index} succeed") if logger is not None else print('Succeed')
+            else:
+                logger.info(f"File {index} failed") if logger is not None else print('Failed')
+        message = f"{counter} files Succeed, {len(listOfFiles) - counter} Failed, Total {len(listOfFiles)} files"
+        logger.info(message) if logger is not None else print(message)
+
     else:
-        callSleep(minutes=10)  # after finished with all the files wait a bit - hours * minutes * seconds
+        callSleep(logger=logger, minutes=10)  # after finished with all the files wait a bit - hours * minutes * seconds
 
 
 if __name__ == '__main__':
+    _logger = Logger('parser.log', getPath(N=2) + f'logs{sep}').getLogger()
     for folder in [readFolder, handledFolder, unhandledFolder, backupFolder]:
         createDir(folder)
     while True:
-        run()
+        _logger.info("Parser is Starting")
+        run(_logger)
+        _logger.info("Parser finished his job.")
