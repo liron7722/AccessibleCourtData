@@ -19,10 +19,12 @@ def getFiles(folderPath, fileType='json'):
 
 
 # input - if dirName is string create folder at current path else create all the path
-def createDir(dirName):
+def createDir(dirName, logger=None):
     try:
         if not path.exists(dirName):  # Create target Directory if don't exist
             mkdir(dirName)
+            message = f"Creating dir with the name: {dirName}"
+            logger.info(message) if logger is not None else print(message)
     except FileNotFoundError as _:
         createDir(getPath(dirName, N=1))  # create parent target folder
         createDir(dirName)  # create target folder
