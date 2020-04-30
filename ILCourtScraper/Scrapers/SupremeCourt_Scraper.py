@@ -368,7 +368,7 @@ class SupremeCourtScraper(Scraper):
 
     def start(self):
         with ThreadPoolExecutor() as executor:
-            indexes = [index for index in range(1, scraper.getNumOfCrawlers() + 1)]
+            indexes = [index for index in range(1, self.getNumOfCrawlers() + 1)]
             executor.map(self.start_crawler, indexes)
 
 
