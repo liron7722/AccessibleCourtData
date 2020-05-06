@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(1, '../..')
+
 from ILCourtScraper.Extra.logger import Logger
 from ILCourtScraper.Extra.time import callSleep
 from ILCourtScraper.Extra.json import readData, saveData
