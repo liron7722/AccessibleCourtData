@@ -38,6 +38,10 @@ class Scraper:
                 return item[key]
         return None
 
+    def uploadData(self, name, data):
+        collection = self.db.get_collection('files')
+        collection.insert_one({"name": name, "data": data})
+
     def get_link(self):
         return NotImplementedError
 

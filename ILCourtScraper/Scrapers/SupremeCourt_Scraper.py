@@ -321,7 +321,9 @@ class SupremeCourtScraper(Scraper):
                     t1 = time()
                     case_details_dict = self.getCaseDetails(crawler, index)
                     if case_details_dict['Doc Details'] is not None:
-                        saveData(case_details_dict, self.randomName(index), self.product_path)
+                        name = self.randomName(index)
+                        saveData(case_details_dict, name, self.product_path)
+                        self.uploadData(name, case_details_dict)
                     caseList.remove(index)
                     massage = f'Case: {index} took in seconds: {time() - t1}'
                     self.logger.info(massage)
