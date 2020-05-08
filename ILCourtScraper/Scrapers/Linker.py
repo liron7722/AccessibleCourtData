@@ -2,6 +2,7 @@ from ILCourtScraper.Extra.time import *
 from ILCourtScraper.Extra.path import *
 from ILCourtScraper.Extra.json import saveData, readData
 
+
 # Functions
 # input - startDate as string, format as string
 # do - create list of dict contain {'date' as string, 'first' as int, 'last' as int, 'is taken' as boolean}
@@ -116,6 +117,7 @@ def updateDateInDB(db, date, first, last, status, case_List):
 def resetDatesInDB(db):
     collection = db.get_collection('dates')
     collection.update_many({}, {'$set': {'is taken': False}})
+
 
 dateURL_P1 = 'https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearDate=null&CaseNumber=null&DateType=2&SearchPeriod=null&COpenDate='
 dateURL_P2 = '&CEndDate='
