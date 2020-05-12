@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(1, '../..')
+
 import os
 import json
 import glob
@@ -11,6 +14,8 @@ from Moving import Moving
 from relative_path import *
 from json_validator import *
 from internet import *
+from ILCourtScraper.Extra.logger import Logger
+
 
 HEADERS = {"Content-Type": "application/json"}
 RULING_INDEX = 'supreme_court_rulings'
@@ -34,7 +39,7 @@ class Elastic:
     def __init__(self, json_schema=True, the_amount_of_delivery=THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME):
         self._log_name = 'Elastic.log'  # name log file
         self._log_path = self.fixPath() + f'{os.sep}logs{os.sep}'
-        self._logger = self.startLogger()
+        self._logger = Logger(self._log_name, self._log_path).getLogger()
         self._moving = Moving()
         self._schema = json_schema
         self._counter = the_amount_of_delivery
@@ -46,24 +51,6 @@ class Elastic:
         path = Path().parent.absolute() if path is None else path
         splitPath = str(path).split(os.sep)
         return f"{os.sep}".join(splitPath[:-N])
-
-    def startLogger(self, logger=None):
-        newLogger = logging.getLogger(__name__) if logger is None else logger
-        newLogger.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s %(levelname)s %(module)s: %(message)s', datefmt='%d-%m-%Y %H-%M-%S')
-
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
-
-        file_handler = logging.handlers.RotatingFileHandler(self._log_path + self._log_name, maxBytes=10485760,
-                                                            backupCount=10)
-        file_handler.setFormatter(formatter)
-
-        newLogger.addHandler(file_handler)
-        newLogger.addHandler(stream_handler)
-
-        newLogger.info('Initialize')
-        return newLogger
 
     def start_index(self):
         self._logger.info("Start posting information into Elastic")
@@ -283,13 +270,14 @@ class Elastic:
         sleep(DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER)
         self._logger.info("The delay is over")
 
-    def call_sleep(self, days=0, hours=0, minutes=1, seconds=0):
+    def callSleep(self, days=0, hours=0, minutes=0, seconds=0):
         massage = f"Going to sleep for {days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
-        self._logger.info(massage)
+        if self._logger is not None:
+            self._logger.info(massage)
         sleep((days * 24 * 60 * 60) + (hours * 60 * 60) + (minutes * 60) + seconds)
 
 
 if __name__ == '__main__':
     while True:
         Elastic().start_index()  # start index product to elastic DB
-        Elastic().call_sleep(minutes=10)  # after finished with all the files wait a bit - hours * minutes * seconds
+        Elastic().callSleep(minutes=10)  # after finished with all the files wait a bit - hours * minutes * seconds
