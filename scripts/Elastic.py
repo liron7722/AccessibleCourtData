@@ -49,7 +49,7 @@ class Elastic:
         return f"{os.sep}".join(splitPath[:-N])
 
     def startLogger(self, logger=None):
-        newLogger = logging.getLogger(__name__) if logger is None else logger
+        newLogger = logging.getLogger(self._log_name) if logger is None else logger
         newLogger.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(module)s: %(message)s', datefmt='%d-%m-%Y %H-%M-%S')
 
