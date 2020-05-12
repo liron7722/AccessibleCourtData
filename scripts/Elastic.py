@@ -35,7 +35,7 @@ class Elastic:
     def __init__(self, json_schema=True, the_amount_of_delivery=THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME):
         self._log_name = 'Elastic.log'  # name log file
         self._log_path = self.fixPath() + f'{os.sep}logs{os.sep}'
-        self._logger = self.startLogger(self._log_name, self._log_path)
+        self._logger = self.startLogger()
         self._moving = Moving()
         self._schema = json_schema
         self._counter = the_amount_of_delivery
@@ -48,27 +48,23 @@ class Elastic:
         splitPath = str(path).split(os.sep)
         return f"{os.sep}".join(splitPath[:-N])
 
-    def startLogger(logName, logPath, logger=None):
-        path = logPath if logPath is not None else ""
-        name = logName if logName is not None else "NoName.log"
-        newLogger = logging.getLogger(logName) if logger is None else logger
-        createDir(path)
-
+    def startLogger(self, logger=None):
+        newLogger = logging.getLogger(__name__) if logger is None else logger
         newLogger.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(module)s: %(message)s', datefmt='%d-%m-%Y %H-%M-%S')
 
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
 
-        file_handler = logging.handlers.RotatingFileHandler(path + name, maxBytes=10485760, backupCount=10)
+        file_handler = logging.handlers.RotatingFileHandler(self._log_path + self._log_name, maxBytes=10485760,
+                                                            backupCount=10)
         file_handler.setFormatter(formatter)
 
         newLogger.addHandler(file_handler)
         newLogger.addHandler(stream_handler)
 
-        newLogger.info('Initialize Log')
+        newLogger.info('Initialize')
         return newLogger
-
 
     def start_index(self):
         self._logger.info("Start posting information into Elastic")
