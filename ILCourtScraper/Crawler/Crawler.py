@@ -18,8 +18,9 @@ class Crawler:
     _text_query = None  # latest text scrape as string
     _logger = None  # logging log class
 
-    def __init__(self, index=1, browser='chrome', delay=1, url=None):
-        self._logger = Logger(f'crawler_{index}.log', getPath(N=2) + f'logs{sep}{__name__}{sep}').getLogger()
+    def __init__(self, index=1, browser='chrome', delay=1, url=None, site=None):
+        logPath = getPath(N=0) + f'logs{sep}{site}{sep}' if site is not None else getPath(N=0) + f'logs{sep}'
+        self._logger = Logger(f'crawler_{index}.log', logPath).getLogger()
         self._driver = self.getBrowser(browser)
         self._driver.maximize_window()  # fullscreen_window()  # Maximize browser window
         self.update_delay(delay)  # update delay
@@ -29,17 +30,18 @@ class Crawler:
     # Functions
     @staticmethod
     def getBrowser(browser='chrome'):
+        path = f'ILCourtScraper{sep}WebDrivers{sep}'
         if browser == 'chrome':
             if system() == 'Windows':
-                return webdriver.Chrome(executable_path=getPath(N=1) + f'WebDrivers{sep}chromedriver.exe')
-            return webdriver.Chrome(executable_path=getPath(N=1) + f'WebDrivers{sep}chromedriver')
+                return webdriver.Chrome(executable_path=getPath(N=0) + path + 'chromedriver.exe')
+            return webdriver.Chrome(executable_path=getPath(N=0) + path + 'chromedriver')
         elif browser == 'firefox':
             if system() == 'Windows':
-                return webdriver.Firefox(executable_path=getPath(N=1) + f'WebDrivers{sep}geckodriver.exe')
-            return webdriver.Firefox(executable_path=getPath(N=1) + f'WebDrivers{sep}geckodriver')
+                return webdriver.Firefox(executable_path=getPath(N=0) + path + 'geckodriver.exe')
+            return webdriver.Firefox(executable_path=getPath(N=0) + path + 'geckodriver')
         elif browser == 'edge':
             if system() == 'Windows':
-                return webdriver.Edge(executable_path=getPath(N=1) + f'WebDrivers{sep}msedgedriver.exe')
+                return webdriver.Edge(executable_path=getPath(N=0) + path + 'msedgedriver.exe')
 
     # input - update as boolean
     # output - return string if true, else None

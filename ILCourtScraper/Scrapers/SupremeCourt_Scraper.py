@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
-sys.path.insert(1, '../..')
 from ILCourtScraper.Scrapers.Scraper import *
 from ILCourtScraper.Extra.json import saveData
 from ILCourtScraper.Extra.time import callSleep, time
@@ -341,7 +339,7 @@ class SupremeCourtScraper(Scraper):
         callSleep(seconds=index)  # make crawlers start in different times to ensure they don't take the same page
 
         while canIGO:
-            crawler = Crawler(index=index, delay=2) if crawler is None else crawler
+            crawler = Crawler(index=index, delay=2, site=self.site) if crawler is None else crawler
             try:
                 date, link, first, last, caseList = self.get_link()
                 if first <= last or last == -1:
@@ -374,9 +372,11 @@ class SupremeCourtScraper(Scraper):
             executor.map(self.start_crawler, indexes)
 
 
-# run scraper only if run directly from python and not from import
-if __name__ == "__main__":
+def main():
     scraper = SupremeCourtScraper(numOfCrawlers=1)
     scraper.start_crawler(1)
 
 
+# run scraper only if run directly from python and not from import
+if __name__ == "__main__":
+    main()

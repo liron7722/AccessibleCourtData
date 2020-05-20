@@ -123,7 +123,7 @@ dateURL_P1 = 'https://supreme.court.gov.il/Pages/SearchJudgments.aspx?&OpenYearD
 dateURL_P2 = '&CEndDate='
 dateURL_P3 = '&freeText=null&Importance=null'
 
-filePath = getPath(N=2) + f'products{sep}'
+filePath = getPath(N=0) + f'products{sep}'
 DateListFileName = 'dateList.json'
 
 updateFunction = [updateDateInFile, updateDateInDB]

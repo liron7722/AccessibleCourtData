@@ -1,15 +1,12 @@
-import sys
-sys.path.insert(1, '../..')
-
 from ILCourtScraper.Extra.logger import Logger
 from ILCourtScraper.Extra.time import callSleep
 from ILCourtScraper.Extra.json import readData, saveData
 from ILCourtScraper.Extra.path import getPath, sep, createDir, changeDir, getFiles
 
-readFolder = getPath(N=2) + f'products{sep}json_products{sep}'
-handledFolder = getPath(N=2) + sep + f'products{sep}handled_json_products{sep}'
-unhandledFolder = getPath(N=2) + sep + f'products{sep}unhandled_json_products{sep}'
-backupFolder = getPath(N=2) + sep + f'products{sep}backup_json_products{sep}'
+readFolder = getPath(N=0) + f'products{sep}json_products{sep}'
+handledFolder = getPath(N=0) + sep + f'products{sep}handled_json_products{sep}'
+unhandledFolder = getPath(N=0) + sep + f'products{sep}unhandled_json_products{sep}'
+backupFolder = getPath(N=0) + sep + f'products{sep}backup_json_products{sep}'
 
 
 def clean_spaces(text):
@@ -227,11 +224,15 @@ def run(logger=None):
         callSleep(logger=logger, minutes=10)  # after finished with all the files wait a bit - hours * minutes * seconds
 
 
-if __name__ == '__main__':
-    _logger = Logger('parser.log', getPath(N=2) + f'logs{sep}').getLogger()
+def main():
+    _logger = Logger('parser.log', getPath(N=0) + f'logs{sep}').getLogger()
     for folder in [readFolder, handledFolder, unhandledFolder, backupFolder]:
         createDir(folder)
     while True:
         _logger.info("Parser is Starting")
         run(_logger)
         _logger.info("Parser finished his job.")
+
+
+if __name__ == '__main__':
+    main()

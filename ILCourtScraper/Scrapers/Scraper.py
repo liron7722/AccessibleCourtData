@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
-sys.path.insert(1, '../..')
 from psutil import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from ILCourtScraper.Extra.db import DB
@@ -15,10 +13,11 @@ class Scraper:
     logger = None
 
     def __init__(self, num_of_crawlers=0, site=None):
-        self.logger = Logger(f'{site}_Scraper.log', getPath(N=2) + f'logs{sep}').getLogger()
+        logPath = getPath(N=0) + f'logs{sep}{site}{sep}' if site is not None else getPath(N=0) + f'logs{sep}'
+        self.logger = Logger(f'{site}_Scraper.log', logPath).getLogger()
         self.db = DB(logger=self.logger).getDB(site)
         self.num_of_crawlers = cpu_count() if num_of_crawlers == 0 else num_of_crawlers  # 0 = max, else num
-        self.product_path = getPath(N=2) + f'products{sep}json_products{sep}'  # product path
+        self.product_path = getPath(N=0) + f'products{sep}json_products{sep}'  # product path
         createDir(self.product_path)
 
     # Functions
