@@ -2,16 +2,15 @@ import os
 import json
 import glob
 import requests
-import logging
-import logging.handlers
 from time import sleep
-from pathlib import Path
 from builder import *
 from Moving import Moving
 from relative_path import *
 from json_validator import *
 from internet import *
-
+from ILCourtScraper.Extra.logger import Logger
+from ILCourtScraper.Extra.time import callSleep
+from ILCourtScraper.Extra.path import getPath, sep, createDir, changeDir, getFiles
 
 HEADERS = {"Content-Type": "application/json"}
 RULING_INDEX = 'supreme_court_rulings'
@@ -32,39 +31,12 @@ class Elastic:
     _elk_id = None
     _elasticsearch_indexes_list = None
 
-    def __init__(self, json_schema=True, the_amount_of_delivery=THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME):
-        self._log_name = 'Elastic.log'  # name log file
-        self._log_path = self.fixPath() + f'{os.sep}logs{os.sep}'
-        self._logger = self.startLogger()
+    def __init__(self, logger=None, json_schema=True, the_amount_of_delivery=THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME):
+        self._logger = logger
         self._moving = Moving()
         self._schema = json_schema
         self._counter = the_amount_of_delivery
         self._elasticsearch_indexes_list = list()
-
-    # Functions
-    @staticmethod
-    def fixPath(path=None, N=1):
-        path = Path().parent.absolute() if path is None else path
-        splitPath = str(path).split(os.sep)
-        return f"{os.sep}".join(splitPath[:-N])
-
-    def startLogger(self, logger=None):
-        newLogger = logging.getLogger(self._log_name) if logger is None else logger
-        newLogger.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s %(levelname)s %(module)s: %(message)s', datefmt='%d-%m-%Y %H-%M-%S')
-
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
-
-        file_handler = logging.handlers.RotatingFileHandler(self._log_path + self._log_name, maxBytes=10485760,
-                                                            backupCount=10)
-        file_handler.setFormatter(formatter)
-
-        newLogger.addHandler(file_handler)
-        newLogger.addHandler(stream_handler)
-
-        newLogger.info('Initialize')
-        return newLogger
 
     def start_index(self):
         self._logger.info("Start posting information into Elastic")
@@ -109,8 +81,10 @@ class Elastic:
                     ack, self._elk_id = self.handler(file_to_read=product)
                     retry += 1
                 if ack is True:
-                    self._elasticsearch_indexes_list.append("{id}::{file_name}".format(id=self._elk_id, file_name=file_name))
-                self._logger.info("The file named {} finished the process and moved to its new location".format(file_name))
+                    self._elasticsearch_indexes_list.append(
+                        "{id}::{file_name}".format(id=self._elk_id, file_name=file_name))
+                self._logger.info(
+                    "The file named {} finished the process and moved to its new location".format(file_name))
                 self._moving.move_to_a_new_location(product, ack)
             else:
                 self._logger.info("File is not approved")
@@ -151,7 +125,8 @@ class Elastic:
                 ack, self._elk_id = self.handler(file_to_read=product)
                 retry += 1
             if ack is True:
-                self._elasticsearch_indexes_list.append("{id}::{file_name}".format(id=self._elk_id, file_name=file_name))
+                self._elasticsearch_indexes_list.append(
+                    "{id}::{file_name}".format(id=self._elk_id, file_name=file_name))
             self._logger.info("The file named {} finished the process and moved to its new location".format(file_name))
             self._moving.move_to_a_new_location(product, ack)
 
@@ -188,7 +163,8 @@ class Elastic:
         return requests.post(url, data=json.dumps(datafile), auth=('elastic', 'changeme'), headers=HEADERS)
 
     def check_status_code(self, status, type_of_request):
-        self._logger.info("{type_of_request}: The Elastic file revenue status code is {status} ".format(type_of_request=type_of_request, status=status.status_code))
+        self._logger.info("{type_of_request}: The Elastic file revenue status code is {status} ".format(
+            type_of_request=type_of_request, status=status.status_code))
         if 200 <= status.status_code <= 299:
             return True
         return False
@@ -201,17 +177,23 @@ class Elastic:
 
     def comparison_data(self, data_to_post, data_from_elastic):
         self._logger.info("Starting to compare")
-        result1 = self.checks_if_identical(data_to_post['Doc Details']['מספר הליך'], data_from_elastic['_source']['Doc Details']['מספר הליך'])
+        result1 = self.checks_if_identical(data_to_post['Doc Details']['מספר הליך'],
+                                           data_from_elastic['_source']['Doc Details']['מספר הליך'])
         self._logger.info("Result 1: {0}".format(result1))
-        result2 = self.checks_if_identical(data_to_post['Doc Details']['לפני'], data_from_elastic['_source']['Doc Details']['לפני'])
+        result2 = self.checks_if_identical(data_to_post['Doc Details']['לפני'],
+                                           data_from_elastic['_source']['Doc Details']['לפני'])
         self._logger.info("Result 2: {0}".format(result2))
-        result3 = self.checks_if_identical(data_to_post['Doc Details']['העותר'], data_from_elastic['_source']['Doc Details']['העותר'])
+        result3 = self.checks_if_identical(data_to_post['Doc Details']['העותר'],
+                                           data_from_elastic['_source']['Doc Details']['העותר'])
         self._logger.info("Result 3: {0}".format(result3))
-        result4 = self.checks_if_identical(data_to_post['Doc Details']['המשיב'], data_from_elastic['_source']['Doc Details']['המשיב'])
+        result4 = self.checks_if_identical(data_to_post['Doc Details']['המשיב'],
+                                           data_from_elastic['_source']['Doc Details']['המשיב'])
         self._logger.info("Result 4: {0}".format(result4))
-        result5 = self.checks_if_identical(data_to_post['Doc Details']['סוג מסמך'], data_from_elastic['_source']['Doc Details']['סוג מסמך'])
+        result5 = self.checks_if_identical(data_to_post['Doc Details']['סוג מסמך'],
+                                           data_from_elastic['_source']['Doc Details']['סוג מסמך'])
         self._logger.info("Result 5: {0}".format(result5))
-        result6 = self.checks_if_identical(data_to_post['Doc Details']['סיכום'], data_from_elastic['_source']['Doc Details']['סיכום'])
+        result6 = self.checks_if_identical(data_to_post['Doc Details']['סיכום'],
+                                           data_from_elastic['_source']['Doc Details']['סיכום'])
         self._logger.info("Result 6: {0}".format(result6))
         self._logger.info("The comparison is over and starts to calculate a result")
         total_result = result1 and result2 and result3 and result4 and result4 and result5 and result6
@@ -241,22 +223,28 @@ class Elastic:
 
                 if self.check_status_code(get_result, GET_REQUEST) is False and data_from_elastic['found'] is False:
                     # Build post request url and data
-                    post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
+                    post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX,
+                                                             id=elasticsearch_id)
                     self._logger.info("Successfully built post request URL and data")
                     self.sleep_now()
                     post_status = self.sent_post_request(post_url, post_data)  # Do post request and get post status
                     self._logger.info("POST request sent")
-                    return self.check_status_code(post_status, POST_REQUEST), elasticsearch_id  # Check type of status code and return
+                    return self.check_status_code(post_status,
+                                                  POST_REQUEST), elasticsearch_id  # Check type of status code and return
 
                 while self.check_status_code(get_result, GET_REQUEST) and data_from_elastic['found'] is True:
-                    the_result_of_the_comparison = self.comparison_data(data_to_post=json_data, data_from_elastic=data_from_elastic)
-                    self._logger.info("The result of comparison is: {result} ".format(result=the_result_of_the_comparison))
+                    the_result_of_the_comparison = self.comparison_data(data_to_post=json_data,
+                                                                        data_from_elastic=data_from_elastic)
+                    self._logger.info(
+                        "The result of comparison is: {result} ".format(result=the_result_of_the_comparison))
                     if the_result_of_the_comparison:
-                        post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
+                        post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX,
+                                                                 id=elasticsearch_id)
                         self.sleep_now()
                         post_status = self.sent_post_request(post_url, post_data)  # Do post request and get post status
                         self._logger.info("POST request sent")
-                        return self.check_status_code(post_status, POST_REQUEST), elasticsearch_id  # Check type of status code and return
+                        return self.check_status_code(post_status,
+                                                      POST_REQUEST), elasticsearch_id  # Check type of status code and return
                     else:
                         elasticsearch_id = rebuilding_id(elasticsearch_id)
                         self._logger.info("ID successfully rebuild")
@@ -268,12 +256,14 @@ class Elastic:
                         data_from_elastic = get_result.json()
 
                 if self.check_status_code(get_result, GET_REQUEST) is False and data_from_elastic['found'] is False:
-                    post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX, id=elasticsearch_id)
+                    post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX,
+                                                             id=elasticsearch_id)
                     self._logger.info("Successfully built post request URL and data")
                     self.sleep_now()
                     post_status = self.sent_post_request(post_url, post_data)  # Do post request and get post status
                     self._logger.info("POST request sent")
-                    return self.check_status_code(post_status, POST_REQUEST), elasticsearch_id  # Check type of status code and return
+                    return self.check_status_code(post_status,
+                                                  POST_REQUEST), elasticsearch_id  # Check type of status code and return
                 return False, None
             except:
                 self._logger.info("There was an error event")
@@ -284,14 +274,13 @@ class Elastic:
         sleep(DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER)
         self._logger.info("The delay is over")
 
-    def callSleep(self, days=0, hours=0, minutes=0, seconds=0):
-        massage = f"Going to sleep for {days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
-        if self._logger is not None:
-            self._logger.info(massage)
-        sleep((days * 24 * 60 * 60) + (hours * 60 * 60) + (minutes * 60) + seconds)
+
+def main():
+    _logger = Logger('elasticsearch.log', getPath(N=1) + f'logs{sep}').getLogger()
+    while True:
+        Elastic(_logger).start_index()  # start index product to elastic DB
+        callSleep(logger=_logger, minutes=10)  # after finished with all the files wait a bit - hours * minutes * seconds
 
 
 if __name__ == '__main__':
-    while True:
-        Elastic().start_index()  # start index product to elastic DB
-        Elastic().callSleep(minutes=10)  # after finished with all the files wait a bit - hours * minutes * seconds
+    main()
