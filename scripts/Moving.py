@@ -1,5 +1,8 @@
+import sys
+sys.path.insert(1, './..')
+
 import shutil
-from relative_path import *
+from scripts.relative_path import *
 
 FAILURE_FOLDER = "products/unhandled_json_products"
 SUCCESS_FOLDER = "products/upload_json_to_elastic"
