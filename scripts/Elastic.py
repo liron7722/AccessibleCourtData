@@ -1,13 +1,16 @@
+import sys
+sys.path.insert(1, './..')
+
 import os
 import json
 import glob
 import requests
 from time import sleep
-from builder import *
-from Moving import Moving
-from relative_path import *
-from json_validator import *
-from internet import *
+from scripts.builder import *
+from scripts.Moving import Moving
+from scripts.relative_path import *
+from scripts.json_validator import *
+from scripts.internet import *
 from ILCourtScraper.Extra.logger import Logger
 from ILCourtScraper.Extra.time import callSleep
 from ILCourtScraper.Extra.path import getPath, sep, createDir, changeDir, getFiles

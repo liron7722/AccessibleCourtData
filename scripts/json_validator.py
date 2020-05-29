@@ -1,6 +1,9 @@
+import sys
+sys.path.insert(1, './..')
+
 import jsonschema
 import json
-from relative_path import *
+from scripts.relative_path import *
 
 DEFAULT_SCHEMA = get_path('json_schema/json_schema.json')
 
