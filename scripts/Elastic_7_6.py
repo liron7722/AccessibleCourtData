@@ -18,7 +18,7 @@ from ILCourtScraper.Extra.path import getPath, sep, createDir, changeDir, getFil
 HEADERS = {"Content-Type": "application/json"}
 RULING_INDEX = 'supreme_court_rulings'
 HANDLED_JSON_PRODUCTS_PATH = "products/handled_json_products"
-INDEXES_FILE_LOCATION = "products/indexes.txt"
+INDEXES_FILE_LOCATION = "products/indexes_7_6.txt"
 NUMBER_OF_REPETITIONS_IN_CASE_OF_FAILURE = 5
 THE_AMOUNT_OF_DELIVERABLES_TO_SEND_EACH_TIME = 100
 DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER = 3  # In seconds
@@ -26,7 +26,7 @@ GET_REQUEST = "GET"
 POST_REQUEST = "POST"
 
 
-class Elastic:
+class Elastic_7_6:
     _logger = None
     _moving = None
     _schema = None
@@ -217,7 +217,7 @@ class Elastic:
 
                 elasticsearch_id = build_elasticsearch_id(json_id=id_from_json)  # Build id to get and post request
                 self._logger.info("ID successfully built")
-                get_url = build_get_request(index=RULING_INDEX, id=elasticsearch_id)  # Build get request url
+                get_url = build_get_request_7_6(index=RULING_INDEX, id=elasticsearch_id)  # Build get request url
                 self._logger.info("Successfully built get request URL")
                 self.sleep_now()
                 get_result = self.send_get_request(url=get_url)  # Send get request
@@ -226,7 +226,7 @@ class Elastic:
 
                 if self.check_status_code(get_result, GET_REQUEST) is False and data_from_elastic['found'] is False:
                     # Build post request url and data
-                    post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX,
+                    post_url, post_data = build_post_request_7_6(json_file=json_data, index=RULING_INDEX,
                                                              id=elasticsearch_id)
                     self._logger.info("Successfully built post request URL and data")
                     self.sleep_now()
@@ -241,7 +241,7 @@ class Elastic:
                     self._logger.info(
                         "The result of comparison is: {result} ".format(result=the_result_of_the_comparison))
                     if the_result_of_the_comparison:
-                        post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX,
+                        post_url, post_data = build_post_request_7_6(json_file=json_data, index=RULING_INDEX,
                                                                  id=elasticsearch_id)
                         self.sleep_now()
                         post_status = self.sent_post_request(post_url, post_data)  # Do post request and get post status
@@ -251,7 +251,7 @@ class Elastic:
                     else:
                         elasticsearch_id = rebuilding_id(elasticsearch_id)
                         self._logger.info("ID successfully rebuild")
-                        get_url = build_get_request(index=RULING_INDEX, id=elasticsearch_id)
+                        get_url = build_get_request_7_6(index=RULING_INDEX, id=elasticsearch_id)
                         self._logger.info("Successfully built get request URL")
                         self.sleep_now()
                         get_result = self.send_get_request(get_url)
@@ -259,7 +259,7 @@ class Elastic:
                         data_from_elastic = get_result.json()
 
                 if self.check_status_code(get_result, GET_REQUEST) is False and data_from_elastic['found'] is False:
-                    post_url, post_data = build_post_request(json_file=json_data, index=RULING_INDEX,
+                    post_url, post_data = build_post_request_7_6(json_file=json_data, index=RULING_INDEX,
                                                              id=elasticsearch_id)
                     self._logger.info("Successfully built post request URL and data")
                     self.sleep_now()
@@ -281,7 +281,7 @@ class Elastic:
 def main():
     _logger = Logger('elasticsearch.log', getPath(N=1) + f'logs{sep}').getLogger()
     while True:
-        Elastic(_logger).start_index()  # start index product to elastic DB
+        Elastic_7_6(_logger).start_index()  # start index product to elastic DB
         callSleep(logger=_logger, minutes=10)  # after finished with all the files wait a bit - hours * minutes * seconds
 
 

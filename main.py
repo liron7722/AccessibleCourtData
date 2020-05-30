@@ -1,7 +1,7 @@
 import sys
 from ILCourtScraper.Parser.parser import main as parser_main
 from ILCourtScraper.Scrapers.SupremeCourt_Scraper import main as scraper_main
-from scripts.Elastic import main as elastic_main
+from scripts.Elastic_5_5_3 import main as elastic_main
 
 if __name__ == '__main__':
     functions = {1: scraper_main,
