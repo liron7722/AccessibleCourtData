@@ -45,7 +45,7 @@ class Elastic_7_6:
         self._logger.info("Start posting information into Elastic")
         directory = get_path(folder=HANDLED_JSON_PRODUCTS_PATH)
         list_of_products = self.get_files_from_folder(folderName=directory)
-        self._logger.info("Get all file from handled_json_products_path folder")
+        self._logger.info("Get all file from handled_json_products folder")
         if self._schema:
             self.index_with_schema(list_of_products)
         else:
