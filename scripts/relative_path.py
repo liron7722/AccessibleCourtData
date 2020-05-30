@@ -6,5 +6,8 @@ def get_parent_dir(directory):
 
 
 def get_path(folder):
-    current_dirs_parent = get_parent_dir(os.getcwd())
-    return os.path.join(current_dirs_parent, folder)
+    if "AccessibleCourtData" in os.getcwd().split('/')[-1]:
+        directory = os.getcwd()
+    else:
+        directory = get_parent_dir(os.getcwd())
+    return os.path.join(directory, folder)
