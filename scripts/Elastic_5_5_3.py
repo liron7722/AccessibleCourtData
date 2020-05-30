@@ -16,7 +16,7 @@ from ILCourtScraper.Extra.time import callSleep
 from ILCourtScraper.Extra.path import getPath, sep, createDir, changeDir, getFiles
 
 HEADERS = {"Content-Type": "application/json"}
-INDEX = 'supreme_court_rulings'
+INDEX = 'supreme_court'
 TYPE = 'rulings'
 HANDLED_JSON_PRODUCTS_PATH = "products/handled_json_products"
 INDEXES_FILE_LOCATION = "products/indexes_5_5_3.txt"
@@ -46,7 +46,7 @@ class Elastic_5_5_3:
         self._logger.info("Start posting information into Elastic")
         directory = get_path(folder=HANDLED_JSON_PRODUCTS_PATH)
         list_of_products = self.get_files_from_folder(folderName=directory)
-        self._logger.info("Get all file from handled_json_products_path folder")
+        self._logger.info("Get all file from handled_json_products folder")
         if self._schema:
             self.index_with_schema(list_of_products)
         else:
