@@ -1,6 +1,7 @@
 from glob import glob
 from shutil import move
 from pathlib import Path
+from platform import system
 from os import sep, path, mkdir
 
 
@@ -26,7 +27,8 @@ def createDir(dirName, logger=None):
             message = f"Creating dir with the name: {dirName}"
             logger.info(message) if logger is not None else print(message)
     except FileNotFoundError as _:
-        createDir(getPath(dirName, N=1))  # create parent target folder
+        n = 1 if system() == 'Windows' else 2  # in case system is not windows - splitPath will have sep at the end
+        createDir(getPath(dirName, N=n))  # create parent target folder
         createDir(dirName)  # create target folder
 
 
