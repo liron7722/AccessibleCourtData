@@ -1,4 +1,3 @@
-- Scrape 2000 or more cases
 - improve scroll to 90+ case
 
 - bug fix:
