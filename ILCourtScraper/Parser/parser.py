@@ -40,7 +40,7 @@ def clean_spaces(text):
     return "".join(temp_list)  # rejoin the set of characters
 
 
-def makeSureNoNumber(line, minimum=1, maximum=20):
+def makeSureNoNumber(line, minimum=1, maximum=200):
     for number in range(minimum, maximum):
         if str(number) in line:
             line = line.replace(str(number), '')
