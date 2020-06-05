@@ -2,6 +2,8 @@ from platform import system
 from ILCourtScraper.Extra.logger import Logger
 from ILCourtScraper.Extra.path import getPath, sep
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException, \
     ElementNotVisibleException, ElementNotSelectableException, ElementNotInteractableException, NoAlertPresentException, \
     JavascriptException, WebDriverException
@@ -32,13 +34,9 @@ class Crawler:
     def getBrowser(browser='chrome'):
         path = f'ILCourtScraper{sep}WebDrivers{sep}'
         if browser == 'chrome':
-            if system() == 'Windows':
-                return webdriver.Chrome(executable_path=getPath(N=0) + path + 'chromedriver.exe')
-            return webdriver.Chrome(executable_path=getPath(N=0) + path + 'chromedriver')
+            return webdriver.Chrome(ChromeDriverManager().install())
         elif browser == 'firefox':
-            if system() == 'Windows':
-                return webdriver.Firefox(executable_path=getPath(N=0) + path + 'geckodriver.exe')
-            return webdriver.Firefox(executable_path=getPath(N=0) + path + 'geckodriver')
+            return webdriver.Firefox(GeckoDriverManager().install())
         elif browser == 'edge':
             if system() == 'Windows':
                 return webdriver.Edge(executable_path=getPath(N=0) + path + 'msedgedriver.exe')
