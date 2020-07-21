@@ -16,8 +16,9 @@ class Scraper:
         logPath = getPath(N=0) + f'logs{sep}{site}{sep}' if site is not None else getPath(N=0) + f'logs{sep}'
         self.logger = Logger(f'{site}_Scraper.log', logPath).getLogger()
         self.db = DB(logger=self.logger).getDB(site)
-        self.num_of_crawlers = cpu_count() if num_of_crawlers == 0 else num_of_crawlers  # 0 = max, else num
+        self.num_of_crawlers = min(cpu_count(), 4) if num_of_crawlers == 0 else num_of_crawlers  # 0 => 4 threads, else num
         self.product_path = getPath(N=0) + f'products{sep}json_products{sep}'  # product path
+        self.backupFolder = getPath(N=0) + f'products{sep}backup_json_products{sep}'
         createDir(self.product_path)
 
     # Functions
@@ -38,11 +39,20 @@ class Scraper:
         return None
 
     def uploadData(self, name, data):
-        collection = self.db.get_collection('files')
-        collection.insert_one({"name": name, "data": data})
+        try:
+            collection = self.db.get_collection('files')
+            collection.insert_one({"name": name, "data": data})
+            return True
+        except Exception as _:  # TODO better Exception
+            return False
 
     def get_link(self):
         return NotImplementedError
 
     def start_crawler(self, index):
         return NotImplementedError
+
+    def start(self):
+        with ThreadPoolExecutor() as executor:
+            indexes = [index for index in range(1, self.getNumOfCrawlers() + 1)]
+            executor.map(self.start_crawler, indexes)
