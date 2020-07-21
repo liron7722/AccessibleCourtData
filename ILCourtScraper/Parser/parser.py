@@ -7,8 +7,8 @@ readFolder = getPath(N=0) + f'products{sep}json_products{sep}'
 handledFolder = getPath(N=0) + f'products{sep}handled_json_products{sep}'
 unhandledFolder = getPath(N=0) + f'products{sep}unhandled_json_products{sep}'
 
-#for f in [readFolder, handledFolder, unhandledFolder]:
-#    createDir(f)
+for f in [readFolder, handledFolder, unhandledFolder]:
+    createDir(f)
 
 
 def clean_spaces(text):
@@ -288,4 +288,4 @@ def main():
 
 
 if __name__ == '__main__':
-     main()
+    main()
