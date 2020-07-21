@@ -9,16 +9,18 @@ handledFolder = getPath(N=0) + f'products{sep}handled_json_products{sep}'
 unhandledFolder = getPath(N=0) + f'products{sep}unhandled_json_products{sep}'
 backupFolder = getPath(N=0) + f'products{sep}backup_json_products{sep}'
 unBackupFolder = getPath(N=0) + f'products{sep}unBackup_json_products{sep}'
+elasticFolder = getPath(N=0) + f'products{sep}upload_json_to_elastic{sep}'
 
 # key = source, value = destination
 uploadFolders = {handledFolder: handledFolder,
                  unhandledFolder: unhandledFolder,
                  backupFolder: backupFolder,
-                 unBackupFolder: backupFolder}
+                 unBackupFolder: backupFolder,
+                 elasticFolder: elasticFolder}
 downloadFolders = [handledFolder, backupFolder]
 
 
-for f in [handledFolder, unhandledFolder, backupFolder, unBackupFolder]:
+for f in [handledFolder, unhandledFolder, backupFolder, unBackupFolder, elasticFolder]:
     createDir(f)
 
 
@@ -55,16 +57,17 @@ def uploadSync(loop=True):
                     _logger.info(f"Starting to upload file {index} of {len(listOfFiles)}... ")
                     data = readData(fileName, '')
                     fixData(fileName, data)
-                    temp = fileName
+                    fullFilePath = fileName
                     fileName = fileName.replace(folder, '')  # extract file name
                     if fileName not in backupFileList:
                         try:
                             connection.insert_one({"name": fileName, "data": data})
                             uCounter += 1
-                            _logger.info("Succeed")
-                            changeDir(temp, uploadFolders[folder])
+                            _logger.info(f"Succeed to upload file {fileName}")
+                            if folder != uploadFolders[folder]:  # move file if folders are different
+                                changeDir(fullFilePath, uploadFolders[folder], deleteSourceIfDestinationFileExist=True)
                         except Exception as e:  # TODO better Exception
-                            _logger.info(f"Failed to upload file{temp}")
+                            _logger.info(f"Failed to upload file {fullFilePath}")
                             _logger.info(e)
                     else:
                         _logger.info("Skipped")
