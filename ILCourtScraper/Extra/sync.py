@@ -18,8 +18,12 @@ uploadFolders = {handledFolder: handledFolder,
 downloadFolders = [handledFolder, backupFolder]
 
 
-for folder in [handledFolder, unhandledFolder, backupFolder, unBackupFolder]:
-    createDir(folder)
+for f in [handledFolder, unhandledFolder, backupFolder, unBackupFolder]:
+    createDir(f)
+
+
+def getFolderName(folder):
+    return folder.split(sep)[-2]
 
 
 def fixData(name, data):
@@ -29,7 +33,7 @@ def fixData(name, data):
         saveData(data, name, "")
 
 
-def uploadSync(loop=True, delay=600):
+def uploadSync(loop=True):
     _logger = Logger('uploadSync.log', getPath(N=0) + f'logs{sep}').getLogger()
     while True:
         total = 0
@@ -38,7 +42,7 @@ def uploadSync(loop=True, delay=600):
         db = DB().getDB('SupremeCourt')
 
         for folder in uploadFolders.keys():
-            connection = db.get_collection(uploadFolders)
+            connection = db.get_collection(getFolderName(folder))
             cursor = list(connection.find({}))
             backupFileList = [file['name'] for file in cursor]
             listOfFiles = getFiles(folderPath=folder)
@@ -69,17 +73,17 @@ def uploadSync(loop=True, delay=600):
         _logger.info(f"{uCounter} files Uploaded...\n{sCounter} files Skipped...\n{total - uCounter - sCounter} Failed...\nTotal {total} files")
         if loop is False:
             break
-        callSleep(logger=_logger, seconds=delay)
+        callSleep(logger=_logger, minutes=10)
 
 
-def downloadSync(loop=True, delay=360):
+def downloadSync(loop=True):
     _logger = Logger('downloadSync.log', getPath(N=0) + f'logs{sep}').getLogger()
     while True:
         total = 0
         db = DB().getDB('SupremeCourt')
         for folder in downloadFolders:
             counter = 0
-            connection = db.get_collection(downloadFolders)
+            connection = db.get_collection(getFolderName(folder))
             cursor = list(connection.find({}))
             fileList = [file.replace(folder, '') for file in getFiles(folderPath=folder)]  # extract file name
             for file in cursor:
@@ -91,4 +95,4 @@ def downloadSync(loop=True, delay=360):
         _logger.info(f"Total {total} files ware downloaded")
         if loop is False:
             break
-        callSleep(logger=_logger, seconds=delay)
+        callSleep(logger=_logger, hours=1)
