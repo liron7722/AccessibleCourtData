@@ -1,4 +1,5 @@
 import json
+from json.decoder import JSONDecodeError
 from ILCourtScraper.Extra.path import getPath
 from ILCourtScraper.Extra.time import currTime
 
@@ -11,7 +12,12 @@ def saveData(data, fileName=None, filePath=None):
 
 
 def readData(fileName, filePath=None):
-    filePath = getPath() if filePath is None else filePath
-    with open(filePath + fileName, encoding='utf8') as json_file:
-        data = json.load(json_file)
-    return data
+    try:
+        filePath = getPath() if filePath is None else filePath
+        with open(filePath + fileName, encoding='utf8') as json_file:
+            data = json.load(json_file)
+        return data
+    except JSONDecodeError as e:
+        print(f'Error in decoding this file: {fileName}')
+        print(e)
+        return ''
