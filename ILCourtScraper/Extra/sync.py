@@ -52,7 +52,7 @@ def uploadSync(loop=True):
                 index = 0
                 for fileName in listOfFiles:
                     index += 1
-                    _logger.info(f"Starting to upload file {index} of {len(listOfFiles)}... ", end='')
+                    _logger.info(f"Starting to upload file {index} of {len(listOfFiles)}... ")
                     data = readData(fileName, '')
                     fixData(fileName, data)
                     temp = fileName
