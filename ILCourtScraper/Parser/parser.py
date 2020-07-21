@@ -1,12 +1,11 @@
 from ILCourtScraper.Extra.logger import Logger
 from ILCourtScraper.Extra.time import callSleep
 from ILCourtScraper.Extra.json import readData, saveData
-from ILCourtScraper.Extra.path import getPath, sep, createDir, changeDir, getFiles
+from ILCourtScraper.Extra.path import getPath, sep, createDir, getFiles, remove
 
 readFolder = getPath(N=0) + f'products{sep}json_products{sep}'
 handledFolder = getPath(N=0) + f'products{sep}handled_json_products{sep}'
 unhandledFolder = getPath(N=0) + f'products{sep}unhandled_json_products{sep}'
-backupFolder = getPath(N=0) + f'products{sep}backup_json_products{sep}'
 
 for f in [readFolder, handledFolder, unhandledFolder]:
     createDir(f)
@@ -251,15 +250,15 @@ def run(folder, logger=None, minDelay=10):
                 continue
             doc['Doc Details'], succeed = parser(doc['Doc Details'])  # if succeed Dict, else text
             writeFolder = handledFolder if succeed else unhandledFolder
-            changeDir(fileName, backupFolder, deleteDestinationIfDestinationFileExist=True)  # backup files
+            remove(fileName)  # delete old copy
             fileName = fileName.replace(folder, '')  # extract file name
-            saveData(doc, fileName, writeFolder)
+            saveData(doc, fileName, writeFolder)  # save new copy
             if succeed:
                 counter += 1
                 logger.info(f"File {index} succeed") if logger is not None else print('Succeed')
             else:
-                from pprint import pprint
-                pprint(doc['Doc Details'])
+                # from pprint import pprint  # for testing
+                # pprint(doc['Doc Details'])  # for testing
                 logger.info(f"File {index} failed") if logger is not None else print('Failed')
         message = f"{counter} files Succeed, {skipCounter} files Skipped, {len(listOfFiles) - counter - skipCounter} files Failed, Total {len(listOfFiles)} files"
         logger.info(message) if logger is not None else print(message)
