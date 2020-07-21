@@ -7,8 +7,8 @@ readFolder = getPath(N=0) + f'products{sep}json_products{sep}'
 handledFolder = getPath(N=0) + f'products{sep}handled_json_products{sep}'
 unhandledFolder = getPath(N=0) + f'products{sep}unhandled_json_products{sep}'
 
-for f in [readFolder, handledFolder, unhandledFolder]:
-    createDir(f)
+#for f in [readFolder, handledFolder, unhandledFolder]:
+#    createDir(f)
 
 
 def clean_spaces(text):
@@ -168,11 +168,11 @@ def iGotItAll(tempDict, keyList):
     return True
 
 
-def parser(verdict):
+def parser(caseText):
     doc_dict = dict()
     addToken, moreInfoToken, tempKey, valuesList, numOfValues, linesToSkip = False, False, None, None, 1, []
-    verdict = drop_extra_info(verdict)
-    verdictLines = verdict.splitlines()
+    caseText = drop_extra_info(caseText)
+    verdictLines = caseText.splitlines()
     doc_dict['מספר הליך'] = verdictLines[0]
     N = len(verdictLines)
     for index in range(1, N):
@@ -226,9 +226,15 @@ def parser(verdict):
             if key not in doc_dict.keys():
                 doc_dict[key] = list()
             if None in doc_dict.keys():
-                return verdict, False
+                return caseText, False
         return doc_dict, True
-    return verdict, False
+    return caseText, False
+
+
+def moveFile(data, fileName, sourceFolder, destFolder):
+    remove(fileName)  # delete old copy
+    fileName = fileName.replace(sourceFolder, '')  # extract file name
+    saveData(data, fileName, destFolder)  # save new copy
 
 
 def run(folder, logger=None, minDelay=10):
@@ -244,15 +250,19 @@ def run(folder, logger=None, minDelay=10):
             message = f"Starting to parse file {index} of {len(listOfFiles)}... "
             logger.info(message) if logger is not None else print(message, end='')
             doc = readData('', fileName)  # fileName include path and os.sep not needed
-            if 'לפני:' not in str(doc['Doc Details']):  # old type of case
+            if len(doc) < 1:  # private case - we got empty file
                 logger.info("Skipped") if logger is not None else print(message)
                 skipCounter += 1
+                moveFile(doc, fileName, folder, unhandledFolder)
+                continue
+            elif 'לפני:' not in str(doc['Doc Details']):  # old type of case
+                logger.info("Skipped") if logger is not None else print(message)
+                skipCounter += 1
+                moveFile(doc, fileName, folder, unhandledFolder)
                 continue
             doc['Doc Details'], succeed = parser(doc['Doc Details'])  # if succeed Dict, else text
             writeFolder = handledFolder if succeed else unhandledFolder
-            remove(fileName)  # delete old copy
-            fileName = fileName.replace(folder, '')  # extract file name
-            saveData(doc, fileName, writeFolder)  # save new copy
+            moveFile(doc, fileName, folder, writeFolder)
             if succeed:
                 counter += 1
                 logger.info(f"File {index} succeed") if logger is not None else print('Succeed')
@@ -278,4 +288,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+     main()
