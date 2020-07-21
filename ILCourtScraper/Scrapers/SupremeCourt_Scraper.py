@@ -320,15 +320,15 @@ class SupremeCourtScraper(Scraper):
                     case_details_dict = self.getCaseDetails(crawler, index)
                     if case_details_dict['Doc Details'] is not None:
                         name = self.randomName(index)
-                        saveData(case_details_dict, name, self.product_path)
-                        self.uploadData(name, case_details_dict)
+                        saveData(case_details_dict, name, self.product_path)  # save copy for parser
+                        saveData(case_details_dict, name, self.backupFolder)  # save copy for backup
                     caseList.remove(index)
+                    UpdateScrapeList(self.db, date, index + 1, N, True, caseList)
                     massage = f'Case: {index} took in seconds: {time() - t1}'
                     self.logger.info(massage)
-                    UpdateScrapeList(self.db, date, index + 1, N, True, caseList)
                 except WebDriverException as _:
                     raise WebDriverException
-                except Exception as _:
+                except Exception as _:  # Unknown Exception appear
                     massage = f'Case: {index} Failed'
                     self.logger.exception(massage)
 
@@ -366,15 +366,11 @@ class SupremeCourtScraper(Scraper):
         callSleep(minutes=10)
         self.start_crawler(index=index)
 
-    def start(self):
-        with ThreadPoolExecutor() as executor:
-            indexes = [index for index in range(1, self.getNumOfCrawlers() + 1)]
-            executor.map(self.start_crawler, indexes)
-
 
 def main():
-    scraper = SupremeCourtScraper(numOfCrawlers=1)
-    scraper.start_crawler(1)
+    scraper = SupremeCourtScraper()
+    #  scraper.start_crawler(1)  # run 1 crawler
+    scraper.start()  # run N crawlers
 
 
 # run scraper only if run directly from python and not from import
