@@ -1,8 +1,8 @@
 from glob import glob
-from shutil import move
+from shutil import move, Error as fileExistError
 from pathlib import Path
 from platform import system
-from os import sep, path, mkdir
+from os import sep, path, mkdir, remove
 
 
 # do - return current path if didn't got oldPath and remove N folders from the end
@@ -33,5 +33,19 @@ def createDir(dirName, logger=None):
 
 
 # move file\folder from oldPath to newPath, fileName can be inside oldPath
-def changeDir(oldPath, newPath, fileName=None):
-    move(oldPath, newPath) if fileName is None else move(oldPath + sep + fileName, newPath)
+def changeDir(sourcePath, destinationPath, fileName=None, deleteSourceIfDestinationFileExist=False, deleteDestinationIfDestinationFileExist=False):
+    try:
+        move(sourcePath, destinationPath) if fileName is None else move(sourcePath + fileName, destinationPath)
+    except fileExistError as _:  # handle a duplicate file
+        print("file already exist in new path - ", end='')
+        if deleteSourceIfDestinationFileExist:
+            remove(sourcePath) if fileName is None else remove(sourcePath + fileName)
+            print("file deleted in source path")
+        elif deleteDestinationIfDestinationFileExist:
+            n = 1 if system() == 'Windows' else 2
+            filePath = destinationPath + fileName if fileName is not None else destinationPath + sourcePath.split(sep)[-n]
+            remove(filePath)
+            print("file deleted in destination path")
+            changeDir(sourcePath, destinationPath, fileName, deleteSourceIfDestinationFileExist, False)
+        else:
+            print("no delete permission was given")
