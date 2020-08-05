@@ -16,7 +16,7 @@ from ILCourtScraper.Extra.time import callSleep
 from ILCourtScraper.Extra.path import getPath, sep, createDir, changeDir, getFiles
 
 HEADERS = {"Content-Type": "application/json"}
-INDEX = 'supreme_court'
+INDEX = 'supreme_court_hebrew'
 TYPE = 'rulings'
 HANDLED_JSON_PRODUCTS_PATH = "products/handled_json_products"
 INDEXES_FILE_LOCATION = "products/indexes_5_5_3.txt"
@@ -277,7 +277,7 @@ class Elastic_5_5_3:
 
 
 def main():
-    _logger = Logger('elasticsearch.log', getPath(N=1) + f'logs{sep}').getLogger()
+    _logger = Logger('elasticsearch.log', getPath(N=0) + f'logs{sep}').getLogger()
     while True:
         Elastic_5_5_3(_logger).start_index()  # start index product to elastic DB
         callSleep(logger=_logger, minutes=10)  # after finished with all the files wait a bit - hours * minutes * seconds
