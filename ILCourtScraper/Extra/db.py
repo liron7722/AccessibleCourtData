@@ -1,7 +1,8 @@
+from os import environ
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 
-DB_URI = "mongodb+srv://ACD:FX6xH18gcFXX0W5U@accessiblecourtdata-vu2ls.mongodb.net/test?retryWrites=true&w=majority"
+DB_URI = environ.get('MONGO_DB_URI')
 
 
 class DB:
