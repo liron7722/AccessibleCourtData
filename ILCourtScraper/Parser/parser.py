@@ -75,7 +75,7 @@ def drop_extra_info(text, minimum=1, maximum=5):
 
 
 def removeWords(values):
-    removeWord = ['כבוד']
+    removeWord = ['כבוד', 'השופטת', 'השופט', 'הרשמת', 'הרשם', 'המשנה לנשיאה', 'המשנה לנשיא', 'הנשיאה', 'הנשיא']
     for word in removeWord:
         if type(values) is list:
             for index in range(len(values)):
@@ -264,6 +264,11 @@ def run(folder, logger=None, minDelay=10):
             writeFolder = handledFolder if succeed else unhandledFolder
             moveFile(doc, fileName, folder, writeFolder)
             if succeed:
+                # insert info data into doc details and remove old duplicate
+                for key in doc['Doc Info']:
+                    doc['Doc Details'][key] = doc['Doc Info'][key] if key != 'עמודים' \
+                        else [int(s) for s in doc['Doc Info'][key].split() if s.isdigit()][0]
+                doc.pop('Doc Info', None)
                 counter += 1
                 logger.info(f"File {index} succeed") if logger is not None else print('Succeed')
             else:
