@@ -3,7 +3,7 @@ from ILCourtScraper.Scrapers.Scraper import *
 from ILCourtScraper.Extra.json import saveData
 from ILCourtScraper.Extra.time import callSleep, time
 from ILCourtScraper.Crawler.Crawler import Crawler, WebDriverException
-from ILCourtScraper.Scrapers.Linker import getLinks, UpdateScrapeList, dateURL_P1, dateURL_P2, dateURL_P3
+from ILCourtScraper.Scrapers.Linker import getLinks, updateDateInDB, dateURL_P1, dateURL_P2, dateURL_P3
 
 
 class SupremeCourtScraper(Scraper):
@@ -19,19 +19,20 @@ class SupremeCourtScraper(Scraper):
             self.logger.info(f'crawler took date {item["date"]}')
             url = dateURL_P1 + item['date'] + dateURL_P2 + item['date'] + dateURL_P3
             return item['date'], url, item['first'], item['last'], item['case List']
-        self.logger.info('Did not get dates from db or file')
-        return None, None, None, None, None
+        else:
+            self.logger.info('Did not get dates from db')
+            return None, None, None, None, None
 
     def get_Frame(self, crawler, elem_type, string):
         frame = crawler.find_elem(elem_type, string)
         if frame is not None:
             return crawler.switch_frame(frame)
         else:
-            massage = f'could not switch to frame: {string}'
-            self.logger.info(massage)
+            message = f'could not switch to frame: {string}'
+            self.logger.info(message)
             return False
 
-    # input - driver as web driver
+    # input - crawler as web driver
     # output - return number of case in the page as int
     def get_num_of_Cases(self, crawler):
         caseNumLoc = ['/html/body/div[2]/div/form/section/div/div']
@@ -44,11 +45,11 @@ class SupremeCourtScraper(Scraper):
                 text = crawler.get_text_query(update)
                 if text is not None and len(text) > 0:
                     N = [int(s) for s in text.split() if s.isdigit()][0]
-                    massage = 'this page got {} cases'.format(N)
-                    self.logger.info(massage)
+                    message = 'this page got {} cases'.format(N)
+                    self.logger.info(message)
                     return N
-        massage = 'could not get this page amount of cases'
-        self.logger.warning(massage)
+        message = 'could not get this page amount of cases'
+        self.logger.warning(message)
         return 500
 
     # input - N as int, first as int, last as int
@@ -65,7 +66,7 @@ class SupremeCourtScraper(Scraper):
 
     @staticmethod
     def get_string_by_index(xpath, index):
-        if xpath == 'case Name':
+        if xpath == 'שם':
             return f'/html/body/div[2]/div/form/div/div/div[1]/div[3]/ul/li[{index}]/div[2]/a'
         elif xpath == 'column':
             return f'/html/body/div/div[1]/div/div/div[{index}]/a'
@@ -77,44 +78,52 @@ class SupremeCourtScraper(Scraper):
             return f'/html/body/div/div[2]/div[{index}]/table/tbody/tr[1]/td[1]'
         elif xpath == 'html':
             return f'/html/body/div[2]/div/form/div/div/div[1]/div[3]/ul/li[{index}]/div[4]/div[2]/a[3]'
+        elif xpath == 'תאריך':
+            return f'/html/body/div[2]/div/form/div/div/div[1]/div[3]/ul/li[{index}]/div[4]/div[1]/span[1]'
+        elif xpath == 'עמודים':
+            return f'/html/body/div[2]/div/form/div/div/div[1]/div[3]/ul/li[{index}]/div[4]/div[1]/span[3]'
 
     def get_elem(self, crawler, xpath, index):
         string = self.get_string_by_index(xpath, index)
         return crawler.find_elem('xpath', string, raise_error=False)
 
-    # input - driver as web driver, N is the index we want to reach as int
+    # input - crawler as web driver, N is the index we want to reach as int
     # do - put in view the item we want to click
     def scrollIntoView(self, crawler, N):
         result = True
         if N > 90:
             for index in range(84, N - 5):
-                elem = self.get_elem(crawler, 'case Name', index)
+                elem = self.get_elem(crawler, 'שם', index)
                 result = crawler.scroll_to_elem(elem)
             if result:
-                massage = 'Scrolled to elem'
+                message = 'Scrolled to elem'
             else:
-                massage = 'could not scrolled to case'
-            self.logger.debug(massage)
+                message = 'could not scrolled to case'
+            self.logger.debug(message)
 
-    # input - driver as web driver, index as int
-    # output - return case name as element, otherwise print error massage and return none
-    # do - return case name and click that case
+    # input - crawler as web driver, index as int
+    # output - return date, page number and case name in dict
+    # do - return case name, date and page number of the case and enter that case
     def getCase(self, crawler, index):
-        elem = self.get_elem(crawler, 'case Name', index)
-        if elem is not None:
-            case_name = elem.text
-            massage = 'Got case name'
-            self.logger.info(massage)
-            crawler.click_elem(elem)
-            return case_name
-        else:
-            massage = 'did not found case name or could not click it'
-            self.logger.warning(massage)
-            return None
+        res = dict()
+        xpathKeys = ['תאריך', 'עמודים', 'שם']
+        for key in xpathKeys:
+            elem = self.get_elem(crawler, key, index)
+            if elem is not None:
+                update = crawler.read_elem_text(elem)
+                res[key] = crawler.get_text_query(update)
+                message = f'Got {key}: {res[key]}'
+                self.logger.info(message)
+                if key == 'שם':
+                    crawler.click_elem(elem)
+            else:
+                message = f'did not found {key}'
+                self.logger.warning(message)
+        return res
 
-    # input - driver as web driver
+    # input - crawler as web driver
     # do - call switchWindow, getFramebyID and getFramebyXpath functions
-    def set_Up_Befor_Get_Case_Inside_Details(self, crawler):
+    def setUpBeforeGetCaseInsideDetails(self, crawler):
         # position browser to see all info
         elem = crawler.find_elem('xpath', '/html/body/div[2]/div/div/section/div/a[1]')
         crawler.scroll_to_elem(elem)
@@ -186,7 +195,7 @@ class SupremeCourtScraper(Scraper):
                     break
         return m_list
 
-    # input - driver as web driver, index as int
+    # input - crawler as web driver, index as int
     # output - return column inside text
     def getColumnText(self, crawler, index):
         string = self.get_string_by_index('no info column', index)
@@ -209,20 +218,20 @@ class SupremeCourtScraper(Scraper):
         else:
             return None
 
-    # input - driver as web driver
+    # input - crawler as web driver
     # output - return False if this is a private case, otherwise True
     def isBlockedCase(self, crawler):
         elem = crawler.find_elem('xpath', '/html/body/table/tbody/tr[1]/td/b', raise_error=False)
         if elem is not None:
-            massage = 'This case in a private !!!'
+            message = 'This case in a private !!!'
             result = False
         else:
-            massage = 'This case in not private - we can scrape more info'
+            message = 'This case in not private - we can scrape more info'
             result = True
-        self.logger.info(massage)
+        self.logger.info(message)
         return result
 
-    # input - driver as web driver
+    # input - crawler as web driver
     # output - return all of the case info as dict[column name] = text
     def getCaseInsideDetails(self, crawler):
         table = dict()
@@ -235,10 +244,10 @@ class SupremeCourtScraper(Scraper):
                     headline = crawler.get_text_query(update)
                     crawler.click_elem(elem)
                     table[headline] = self.getColumnText(crawler, index)
-                    massage = 'got info from column number: {}'.format(index)
+                    message = 'got info from column number: {}'.format(index)
                 else:
-                    massage = 'could not get text or press column number: {}'.format(index)
-                self.logger.info(massage)
+                    message = 'could not get text or press column number: {}'.format(index)
+                self.logger.info(message)
         return table
 
     @staticmethod
@@ -249,7 +258,7 @@ class SupremeCourtScraper(Scraper):
             text = elem.text  # clean spaces
         return text
 
-    # input - driver as web driver
+    # input - crawler as web driver
     def getCaseDetails(self, crawler, index):
         caseDetailsDict = dict()
 
@@ -257,12 +266,12 @@ class SupremeCourtScraper(Scraper):
         self.get_Frame(crawler, 'id', 'serviceFram')
 
         self.scrollIntoView(crawler, index)
-        caseName = self.getCase(crawler, index)
+        caseDetailsDict['Doc Info'] = self.getCase(crawler, index)
 
-        if caseName is not None:
+        if caseDetailsDict['Doc Info']['שם'] is not None:
             self.fixPageLocation(crawler)
             caseDetailsDict['Doc Details'] = self.get_doc(crawler)
-
+            caseDetailsDict['Doc Info'].pop('שם', None)  # remove duplicate name before merge dicts
             self.get_Frame(crawler, 'xpath', '/html/body/div[2]/div/div/div[2]/div/div[1]/div/div/iframe')
             caseDetailsDict['Case Details'] = self.getCaseInsideDetails(crawler)
 
@@ -293,7 +302,7 @@ class SupremeCourtScraper(Scraper):
             self.checkForBackButton(crawler)  # in page got only the same case - happen in old dates
         return N, pageLoaded
 
-    # input - driver as web driver
+    # input - crawler as web driver
     # output (disabled) - return all the cases for the page he see as dict[caseName] = [caseFileDict, caseDetailsDict]
     #                                                    caseFileDict as dict['Case File'] = document text
     #                                                    caseDetailsDict as dict['Case Details'] = Case Details
@@ -309,48 +318,49 @@ class SupremeCourtScraper(Scraper):
             return None
 
         if finish == 0:
-            UpdateScrapeList(self.db, date, start, finish, True, caseList)
+            updateDateInDB(self.db, date, start, finish, True, caseList)
         else:
             caseList = [i for i in range(1, N + 1)] if len(caseList) == 0 else caseList
-            massage = f'page scrape cases {caseList}'
-            self.logger.info(massage)
+            message = f'page scrape cases {caseList}'
+            self.logger.info(message)
+            tempCaseList = caseList.copy()
             for index in caseList:
                 try:
                     t1 = time()
                     case_details_dict = self.getCaseDetails(crawler, index)
                     if case_details_dict['Doc Details'] is not None:
                         name = self.randomName(index)
-                        saveData(case_details_dict, name, self.product_path)  # save copy for parser
+                        saveData(case_details_dict, name, self.productsFolder)  # save copy for parser
                         saveData(case_details_dict, name, self.backupFolder)  # save copy for backup
-                    caseList.remove(index)
-                    UpdateScrapeList(self.db, date, index + 1, N, True, caseList)
-                    massage = f'Case: {index} took in seconds: {time() - t1}'
-                    self.logger.info(massage)
+                    tempCaseList.remove(index)
+                    updateDateInDB(self.db, date, index, N, True, tempCaseList)
+                    message = f'Case: {index} took in seconds: {time() - t1}'
+                    self.logger.info(message)
                 except WebDriverException as _:
                     raise WebDriverException
                 except Exception as _:  # Unknown Exception appear
-                    massage = f'Case: {index} Failed'
-                    self.logger.exception(massage)
+                    message = f'Case: {index} Failed'
+                    self.logger.exception(message)
 
     # input - index as int
     def start_crawler(self, index):
+        callSleep(seconds=index * 5)  # crawlers start in different times to ensure they don't take the same page
         crawler = None
         canIGO = self.getSettings('crawler Run')
-        callSleep(seconds=index)  # make crawlers start in different times to ensure they don't take the same page
 
         while canIGO:
             crawler = Crawler(index=index, delay=2, site=self.site) if crawler is None else crawler
             try:
                 date, link, first, last, caseList = self.get_link()
                 if first <= last or last == -1:
-                    massage = f'Starting to scrape date: {date}'
-                    self.logger.info(massage)
+                    message = f'Starting to scrape date: {date}'
+                    self.logger.info(message)
                     t1 = time()
                     self.get_Cases_Data(crawler, date, link, first, last, caseList)
-                    massage = f'Finished crawling page with the date: {date}, it took {(time() - t1) / 60} minutes'
+                    message = f'Finished crawling page with the date: {date}, it took {(time() - t1) / 60} minutes'
                 else:
-                    massage = 'Nothing to crawl here'
-                self.logger.info(massage)
+                    message = 'Nothing to crawl here'
+                self.logger.info(message)
 
             except WebDriverException as _:
                 message = f'browser closed or crashed - restart value is {canIGO}'
