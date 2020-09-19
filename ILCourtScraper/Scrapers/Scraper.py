@@ -9,7 +9,7 @@ from ILCourtScraper.Extra.path import getPath, sep, createDir
 
 class Scraper:
     num_of_crawlers = None  # number of threads as well
-    product_path = None  # product path as string
+    productsFolder = None  # product path as string
     logger = None
 
     def __init__(self, num_of_crawlers=0, site=None):
@@ -17,9 +17,9 @@ class Scraper:
         self.logger = Logger(f'{site}_Scraper.log', logPath).getLogger()
         self.db = DB(logger=self.logger).getDB(site)
         self.num_of_crawlers = min(cpu_count(), 4) if num_of_crawlers == 0 else num_of_crawlers  # 0 => 4 threads, else num
-        self.product_path = getPath(N=0) + f'products{sep}json_products{sep}'  # product path
+        self.productsFolder = getPath(N=0) + f'products{sep}json_products{sep}'  # product path
         self.backupFolder = getPath(N=0) + f'products{sep}backup_json_products{sep}'
-        createDir(self.product_path)
+        createDir(self.productsFolder)
 
     # Functions
     def getNumOfCrawlers(self):
