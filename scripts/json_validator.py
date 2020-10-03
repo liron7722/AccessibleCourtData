@@ -5,7 +5,7 @@ import jsonschema
 import json
 from scripts.relative_path import *
 
-DEFAULT_SCHEMA = get_path('json_schema/json_schema_new.json')
+DEFAULT_SCHEMA = get_path('json_schema/json_schema.json')
 
 
 def validate_v1(dataFile, schemaFile=DEFAULT_SCHEMA):

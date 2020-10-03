@@ -8,9 +8,11 @@
 	"properties":{
 		"Doc Details":{
             "type": "object",
-            "required":["לפני", "העותר", "המשיב", "מספר הליך", "סוג מסמך", "סיכום"],
+            "required":["לפני", "העותר", "המשיב", "מספר הליך", "סוג מסמך", "סיכום", "עמודים", "תאריך"],
 			"items":{
 				"properties":{
+					"עמודים":{"type":"string"},
+					"תאריך":{"type":"integer"},
 					"מספר הליך":{"type":"string"},
                     "לפני":{"type":"array"},
 					"העותר":{"type":"array"},
