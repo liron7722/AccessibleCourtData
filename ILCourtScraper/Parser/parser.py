@@ -246,35 +246,38 @@ def run(folder, logger=None, minDelay=10):
         counter = 0
         skipCounter = 0
         for fileName in listOfFiles:
-            index += 1
-            message = f"Starting to parse file {index} of {len(listOfFiles)}... "
-            logger.info(message) if logger is not None else print(message, end='')
-            doc = readData('', fileName)  # fileName include path and os.sep not needed
-            if len(doc) < 1:  # private case - we got empty file
-                logger.info("Skipped") if logger is not None else print(message)
-                skipCounter += 1
-                moveFile(doc, fileName, folder, unhandledFolder)
-                continue
-            elif 'לפני:' not in str(doc['Doc Details']):  # old type of case
-                logger.info("Skipped") if logger is not None else print(message)
-                skipCounter += 1
-                moveFile(doc, fileName, folder, unhandledFolder)
-                continue
-            doc['Doc Details'], succeed = parser(doc['Doc Details'])  # if succeed Dict, else text
-            writeFolder = handledFolder if succeed else unhandledFolder
-            moveFile(doc, fileName, folder, writeFolder)
-            if succeed:
-                # insert info data into doc details and remove old duplicate
-                for key in doc['Doc Info']:
-                    doc['Doc Details'][key] = doc['Doc Info'][key] if key != 'עמודים' \
-                        else [int(s) for s in doc['Doc Info'][key].split() if s.isdigit()][0]
-                doc.pop('Doc Info', None)
-                counter += 1
-                logger.info(f"File {index} succeed") if logger is not None else print('Succeed')
-            else:
-                # from pprint import pprint  # for testing
-                # pprint(doc['Doc Details'])  # for testing
-                logger.info(f"File {index} failed") if logger is not None else print('Failed')
+            try:
+                index += 1
+                message = f"Starting to parse file {index} of {len(listOfFiles)}... "
+                logger.info(message) if logger is not None else print(message, end='')
+                doc = readData('', fileName)  # fileName include path and os.sep not needed
+                if len(doc) < 1:  # private case - we got empty file
+                    logger.info("Skipped") if logger is not None else print(message)
+                    skipCounter += 1
+                    moveFile(doc, fileName, folder, unhandledFolder)
+                    continue
+                elif 'לפני:' not in str(doc['Doc Details']):  # old type of case
+                    logger.info("Skipped") if logger is not None else print(message)
+                    skipCounter += 1
+                    moveFile(doc, fileName, folder, unhandledFolder)
+                    continue
+                doc['Doc Details'], succeed = parser(doc['Doc Details'])  # if succeed Dict, else text
+                writeFolder = handledFolder if succeed else unhandledFolder
+                moveFile(doc, fileName, folder, writeFolder)
+                if succeed:
+                    # insert info data into doc details and remove old duplicate
+                    for key in doc['Doc Info']:
+                        doc['Doc Details'][key] = doc['Doc Info'][key] if key != 'עמודים' \
+                            else [int(s) for s in doc['Doc Info'][key].split() if s.isdigit()][0]
+                    doc.pop('Doc Info', None)
+                    counter += 1
+                    logger.info(f"File {index} succeed") if logger is not None else print('Succeed')
+                else:
+                    # from pprint import pprint  # for testing
+                    # pprint(doc['Doc Details'])  # for testing
+                    logger.info(f"File {index} failed") if logger is not None else print('Failed')
+            except:
+                pass
         message = f"{counter} files Succeed, {skipCounter} files Skipped, {len(listOfFiles) - counter - skipCounter} files Failed, Total {len(listOfFiles)} files"
         logger.info(message) if logger is not None else print(message)
 
