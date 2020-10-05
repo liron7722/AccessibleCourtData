@@ -22,6 +22,6 @@ if __name__ == '__main__':
                            "4: Upload Sync\n"
                            "5: Download Sync\n"
                            ))
-    if len(functions) > choice > 0:
+    if len(functions) >= choice > 0:
         func = functions[choice]
         func()
