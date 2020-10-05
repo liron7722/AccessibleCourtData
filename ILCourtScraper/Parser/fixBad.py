@@ -23,8 +23,9 @@ def run():
     listOfFiles = getFiles(folderPath=readFolder)
     for fileName in listOfFiles:
         doc = readData('', fileName)  # fileName include path and os.sep not needed
-        doc = fixSchema(doc)
-        moveFile(doc, fileName, readFolder, writeFolder)
+        if 'לפני' in doc['Doc Details'].keys():
+            doc = fixSchema(doc)
+            moveFile(doc, fileName, readFolder, writeFolder)
 
 
 run()
