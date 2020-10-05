@@ -262,7 +262,7 @@ def run(folder, logger=None, minDelay=10):
                 continue
             doc['Doc Details'], succeed = parser(doc['Doc Details'])  # if succeed Dict, else text
             writeFolder = handledFolder if succeed else unhandledFolder
-            moveFile(doc, fileName, folder, writeFolder)
+
             if succeed:
                 # insert info data into doc details and remove old duplicate
                 for key in doc['Doc Info']:
@@ -275,6 +275,7 @@ def run(folder, logger=None, minDelay=10):
                 # from pprint import pprint  # for testing
                 # pprint(doc['Doc Details'])  # for testing
                 logger.info(f"File {index} failed") if logger is not None else print('Failed')
+            moveFile(doc, fileName, folder, writeFolder)
         message = f"{counter} files Succeed, {skipCounter} files Skipped, {len(listOfFiles) - counter - skipCounter} files Failed, Total {len(listOfFiles)} files"
         logger.info(message) if logger is not None else print(message)
 
