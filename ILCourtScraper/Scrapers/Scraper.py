@@ -36,7 +36,9 @@ class Scraper:
         for item in query:
             if key in item:
                 return item[key]
-        return None
+
+        db.collection.insert({ "crawler Run": True })  # in case of first run
+        return self.getSettings(key)
 
     def uploadData(self, name, data):
         try:
