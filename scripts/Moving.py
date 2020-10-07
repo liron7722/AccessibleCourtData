@@ -1,7 +1,9 @@
 import sys
 sys.path.insert(1, './..')
 
+import os
 import shutil
+import ntpath
 from scripts.relative_path import *
 
 FAILURE_FOLDER = "products/unhandled_json_products"
@@ -23,7 +25,7 @@ class Moving:
             self.failure(file)
 
     def success(self, file):
-        shutil.move(file, self._success_path)
+        shutil.move(file, os.path.join(self._success_path, ntpath.basename(file)))
 
     def failure(self, file):
-        shutil.move(file, self._failure_path)
+        shutil.move(file, os.path.join(self._failure_path, ntpath.basename(file)))

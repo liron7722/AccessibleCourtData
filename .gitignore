@@ -115,3 +115,5 @@ Data Cleaning.txt
 *[0-9].json
 
 products/indexes_5_5_3.txt
+*.log.*
+*.out
