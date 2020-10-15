@@ -260,7 +260,7 @@ class Elastic_5_5_3:
                 return False, None
             except:
                 self._logger.exception("There was an error event")
-                return False, Noneexception
+                return False, None
 
     def sleep_now(self):
         self._logger.info("The system is delayed for {0} seconds".format(DELAY_TIME_BETWEEN_ONE_REQUEST_AND_ANOTHER))
