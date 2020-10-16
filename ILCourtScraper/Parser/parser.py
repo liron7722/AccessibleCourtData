@@ -101,7 +101,7 @@ def isThereMore(line, oldValues=None, key=';'):
 def get_Key(tempKey):
     tempKey = makeSureNoNumber(tempKey)
     temp_dict = {
-        'לפני': ['לפני'],
+        'לפני': ['לפני', 'בפני'],
         'בשם העותר': ['בשם המערערים', 'בשם המערער', 'בשם המערערת', 'בשם המערערות',
                       'בשם העותר', 'בשם העותרת', 'בשם העותרים', 'בשם העותרות',
                       'בשם המבקש', 'בשם המבקשת', 'בשם המבקשים', 'בשם המבקשות',
@@ -252,12 +252,14 @@ def run(folder, logger=None, minDelay=10):
                 logger.info(message) if logger is not None else print(message, end='')
                 doc = readData('', fileName)  # fileName include path and os.sep not needed
                 if len(doc) < 1:  # private case - we got empty file
-                    logger.info("Skipped") if logger is not None else print(message)
+                    message = "Skipped because len"
+                    logger.info(message) if logger is not None else print(message)
                     skipCounter += 1
                     moveFile(doc, fileName, folder, unhandledFolder)
                     continue
-                elif 'לפני:' not in str(doc['Doc Details']):  # old type of case
-                    logger.info("Skipped") if logger is not None else print(message)
+                elif 'פני:' not in str(doc['Doc Details']):  # old type of case
+                    message = "Skipped because missing key"
+                    logger.info(message) if logger is not None else print(message)
                     skipCounter += 1
                     moveFile(doc, fileName, folder, unhandledFolder)
                     continue
@@ -273,8 +275,6 @@ def run(folder, logger=None, minDelay=10):
                     counter += 1
                     logger.info(f"File {index} succeed") if logger is not None else print('Succeed')
                 else:
-                    # from pprint import pprint  # for testing
-                    # pprint(doc['Doc Details'])  # for testing
                     logger.info(f"File {index} failed") if logger is not None else print('Failed')
                 moveFile(doc, fileName, folder, writeFolder)
             except:
